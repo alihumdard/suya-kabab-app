@@ -5,6 +5,7 @@
 }
 body {
   background-color: #e9ecef;
+  zoom: 80%;
 }
 .dashboard-item {
   padding: 10px;
@@ -39,7 +40,7 @@ body {
 }
 .card-section {
   background-color: white;
-  width: 95%;
+  width: 85%;
   margin-left: 1.2rem;
   padding: 10px;
   border-radius: 5px;
@@ -47,10 +48,17 @@ body {
 .card-images img {
   border-radius: 20px;
 }
-.secial-fotsize {
+.kab-heading-size {
   font-size: 15px;
 }
 
+.image-heght {
+  width: 10rem;
+  height: 130px;
+}
+.menue-dashbord {
+  display: block;
+}
 @media (max-width: 300px) {
   .content h5,
   .content small {
@@ -67,4 +75,18 @@ body {
   .card-section {
     align-items: stretch !important;
   }
+  .image-heght {
+    width: 500px;
+    height: 290px;
+    border-radius: 50px;
+  }
+  .kab-heading-size {
+    font-size: 29px;
+  }
+  .menue-dashbord {
+    display: none;
+  }
 }
+
+
+/*  */

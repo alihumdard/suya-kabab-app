@@ -18,17 +18,14 @@
     />
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/suya-kabab-app/assets/css/style.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
   </head>
 
   <body>
-    
     <nav class="navbar navbar-light bg-light d-lg-none px-3">
       <div class="d-flex justify-content-between align-items-center w-100">
-       
-        <img src="/suya-kabab-app/assets/images/Logo.png" alt="Logo" style="max-height: 40px" />
+        <img src="assets/images/Logo.png" alt="Logo" style="max-height: 40px" />
 
-      
         <button
           class="navbar-toggler"
           type="button"
@@ -43,14 +40,13 @@
 
     <div class="container-fluid">
       <div class="row">
-        
         <div class="col-lg-3 d-none d-lg-block vh-100 p-3">
           <div class="mb-4">
             <img
-              src="/suya-kabab-app/assets/images/Logo.png"
+              src="assets/images/Logo.png"
               alt="Logo"
               class="img-fluid"
-              style="max-height: 40px"
+              style="max-height: 20px"
             />
           </div>
 
@@ -83,7 +79,7 @@
             </div>
             <div class="ms-2">
               <img
-                src="/suya-kabab-app/assets/images/chef.png"
+                src="assets/images/chef.png"
                 alt="Upgrade"
                 style="width: 70px"
               />
@@ -112,7 +108,6 @@
           </div>
           <div class="offcanvas-body p-0">
             <div class="p-3">
-             
               <div class="menu fw-bold">
                 <div class="dashboard-item mb-3">
                   <i class="fa-solid fa-house me-2"></i> Dashboard
@@ -133,16 +128,22 @@
 
               <div
                 class="sidebar-box mt-5 p-3 rounded text-white shadow-sm d-flex align-items-center"
+                style="width: 190px; height: 100px; font-size: 10px"
               >
-                <div class="flex-grow-1">
-                  <h6 class="mb-1 fw-bold">
+                <div class="flex-grow-1" style="font-size: 10px">
+                  <h6 class="mb-1 fw-bold" style="font-size: 11px">
                     Please, organize your menus through button below!
                   </h6>
-                  <button class="btn btn-sm btn-addmenu">+ Add Menus</button>
+                  <button
+                    class="btn btn-sm btn-addmenu"
+                    style="width: 65px; font-size: 7px"
+                  >
+                    + Add Menus
+                  </button>
                 </div>
                 <div class="ms-2">
                   <img
-                    src="/suya-kabab-app/assets/images/chef.png"
+                    src="assets/images/chef.png"
                     alt="Upgrade"
                     style="width: 70px"
                   />
@@ -156,7 +157,6 @@
           </div>
         </div>
 
-    
         <main class="col-lg-9 p-0">
           <div class="content">
             <div
@@ -164,17 +164,16 @@
             >
               <div class="d-flex align-items-center gap-2">
                 <h5 class="fw-bold mb-0" style="color: #f26b25">Dashboard</h5>
-                <span class="text-muted">/ Menu</span>
+                <span class="text-muted menue-dashbord">/ Menu</span>
               </div>
 
               <div class="d-flex align-items-center gap-4">
-              
                 <div class="d-flex gap-4">
                   <div
                     class="position-relative bg-light rounded p-2"
-                    style="width: 36px; height: 36px"
+                    style="width: 36px; height: 36px; "
                   >
-                    <i class="fa-solid fa-bell text-primary"></i>
+                    <i class="fa-solid fa-bell text-primary text-center"></i>
                     <span
                       class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info"
                       >2</span
@@ -212,13 +211,12 @@
                   </div>
                 </div>
 
-               
                 <div class="text-start">
                   <div class="fw-bold">Samantha</div>
                   <small class="text-muted">Admin</small>
                 </div>
                 <img
-                  src="/suya-kabab-app/assets/images/placeholder.png"
+                  src="assets/images/placeholder.png"
                   alt="User"
                   class="rounded-circle"
                   width="40"
@@ -239,7 +237,6 @@
 
             <button class="btn btn-danger">Serch</button>
 
-       
             <button
               class="btn btn-success"
               data-bs-toggle="modal"
@@ -248,7 +245,6 @@
               + Add Menu
             </button>
 
-       
             <div
               class="modal fade"
               id="addMenuModal"
@@ -272,7 +268,6 @@
 
                   <div class="modal-body">
                     <form>
-                    
                       <div class="mb-3">
                         <label class="form-label">Item Name</label>
                         <input
@@ -282,7 +277,6 @@
                         />
                       </div>
 
-                    
                       <div class="mb-3">
                         <label class="form-label">Category</label>
                         <select class="form-select">
@@ -293,7 +287,6 @@
                         </select>
                       </div>
 
-                    
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Price</label>
@@ -411,46 +404,31 @@
               </ul>
             </div>
             <div class="row mt-5">
-            
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card h-100 border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
               </div>
-            
+
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
-                    <p class="text-muted fw-bold">$18.00</p>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border-0">
-                  <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
-                    alt="Special Chicken"
-                  />
-                  <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
@@ -458,59 +436,58 @@
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
               </div>
             </div>
             <div class="row">
-            
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card h-100 border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
               </div>
-             
+
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
-                    <p class="text-muted fw-bold">$18.00</p>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border-0">
-                  <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
-                    alt="Special Chicken"
-                  />
-                  <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
@@ -518,59 +495,58 @@
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
               </div>
             </div>
             <div class="row">
-             
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card h-100 border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
               </div>
-            
+
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
-                    <p class="text-muted fw-bold">$18.00</p>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border-0">
-                  <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
-                    alt="Special Chicken"
-                  />
-                  <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
@@ -578,19 +554,34 @@
               <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border-0">
                   <img
-                    src="/suya-kabab-app/assets/images/image.png"
-                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
                     alt="Special Chicken"
                   />
                   <div class="card-body">
-                    <h4 class="special-fontsize mb-1">Kabab</h4>
-                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold kab-heading-size text-start">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2 image-heght"
+                    alt="Special Chicken"
+                    
+                  />
+                  <div class="card-body">
+                    <h4 class="kab-heading-size text-start mb-1">Kabab</h4>
+                    <h6 class="kab-heading-size text-start mb-2">Chicken</h6>
                     <p class="text-muted fw-bold">$18.00</p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>                                           
+          </div>
         </main>
       </div>
     </div>
