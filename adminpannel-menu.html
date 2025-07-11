@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/suya-kabab-app/assets/css/style.css" />
+  </head>
+
+  <body>
+    
+    <nav class="navbar navbar-light bg-light d-lg-none px-3">
+      <div class="d-flex justify-content-between align-items-center w-100">
+       
+        <img src="/suya-kabab-app/assets/images/Logo.png" alt="Logo" style="max-height: 40px" />
+
+      
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarMenu"
+          aria-controls="sidebarMenu"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        
+        <div class="col-lg-3 d-none d-lg-block vh-100 p-3">
+          <div class="mb-4">
+            <img
+              src="/suya-kabab-app/assets/images/Logo.png"
+              alt="Logo"
+              class="img-fluid"
+              style="max-height: 40px"
+            />
+          </div>
+
+          <div class="menu fw-bold">
+            <div class="dashboard-item mb-3">
+              <i class="fa-solid fa-house me-2"></i> Dashboard
+            </div>
+            <div class="dashboard-item mb-3">
+              <i class="fa-solid fa-receipt me-2"></i> Orders
+            </div>
+            <div class="dashboard-item active mb-3">
+              <i class="fa-solid fa-bars-staggered me-2"></i> Menu
+            </div>
+            <div class="dashboard-item mb-3">
+              <i class="fa-solid fa-envelope me-2"></i> Messages
+            </div>
+            <div class="dashboard-item mb-3">
+              <i class="fa-solid fa-star me-2"></i> Reviews
+            </div>
+          </div>
+
+          <div
+            class="sidebar-box mt-5 p-3 rounded text-white shadow-sm d-flex align-items-center"
+          >
+            <div class="flex-grow-1">
+              <h6 class="mb-1 fw-bold">
+                Please, organize your menus through button below!
+              </h6>
+              <button class="btn btn-sm btn-addmenu">+ Add Menus</button>
+            </div>
+            <div class="ms-2">
+              <img
+                src="/suya-kabab-app/assets/images/chef.png"
+                alt="Upgrade"
+                style="width: 70px"
+              />
+            </div>
+          </div>
+
+          <footer class="text-muted mt-2 text-center">
+            <p>@2025 All Rights Reserved</p>
+          </footer>
+        </div>
+
+        <div
+          class="offcanvas offcanvas-start d-lg-none"
+          tabindex="-1"
+          id="sidebarMenu"
+          aria-labelledby="sidebarMenuLabel"
+        >
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarMenuLabel">Menu</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="offcanvas"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="offcanvas-body p-0">
+            <div class="p-3">
+             
+              <div class="menu fw-bold">
+                <div class="dashboard-item mb-3">
+                  <i class="fa-solid fa-house me-2"></i> Dashboard
+                </div>
+                <div class="dashboard-item mb-3">
+                  <i class="fa-solid fa-receipt me-2"></i> Orders
+                </div>
+                <div class="dashboard-item active mb-3">
+                  <i class="fa-solid fa-bars-staggered me-2"></i> Menu
+                </div>
+                <div class="dashboard-item mb-3">
+                  <i class="fa-solid fa-envelope me-2"></i> Messages
+                </div>
+                <div class="dashboard-item mb-3">
+                  <i class="fa-solid fa-star me-2"></i> Reviews
+                </div>
+              </div>
+
+              <div
+                class="sidebar-box mt-5 p-3 rounded text-white shadow-sm d-flex align-items-center"
+              >
+                <div class="flex-grow-1">
+                  <h6 class="mb-1 fw-bold">
+                    Please, organize your menus through button below!
+                  </h6>
+                  <button class="btn btn-sm btn-addmenu">+ Add Menus</button>
+                </div>
+                <div class="ms-2">
+                  <img
+                    src="/suya-kabab-app/assets/images/chef.png"
+                    alt="Upgrade"
+                    style="width: 70px"
+                  />
+                </div>
+              </div>
+
+              <footer class="text-muted mt-2 text-center">
+                <p>@2025 All Rights Reserved</p>
+              </footer>
+            </div>
+          </div>
+        </div>
+
+    
+        <main class="col-lg-9 p-0">
+          <div class="content">
+            <div
+              class="d-flex justify-content-between mt-3 align-items-center mb-4 px-3"
+            >
+              <div class="d-flex align-items-center gap-2">
+                <h5 class="fw-bold mb-0" style="color: #f26b25">Dashboard</h5>
+                <span class="text-muted">/ Menu</span>
+              </div>
+
+              <div class="d-flex align-items-center gap-4">
+              
+                <div class="d-flex gap-4">
+                  <div
+                    class="position-relative bg-light rounded p-2"
+                    style="width: 36px; height: 36px"
+                  >
+                    <i class="fa-solid fa-bell text-primary"></i>
+                    <span
+                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info"
+                      >2</span
+                    >
+                  </div>
+                  <div
+                    class="position-relative bg-light rounded p-2"
+                    style="width: 36px; height: 36px"
+                  >
+                    <i class="fa-solid fa-gift text-secondary"></i>
+                    <span
+                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary"
+                      >10</span
+                    >
+                  </div>
+                  <div
+                    class="position-relative bg-light rounded p-2"
+                    style="width: 36px; height: 36px"
+                  >
+                    <i class="fa-solid fa-message text-primary"></i>
+                    <span
+                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                      >3</span
+                    >
+                  </div>
+                  <div
+                    class="position-relative bg-light rounded p-2"
+                    style="width: 36px; height: 36px"
+                  >
+                    <i class="fa-solid fa-gear text-danger"></i>
+                    <span
+                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      >1</span
+                    >
+                  </div>
+                </div>
+
+               
+                <div class="text-start">
+                  <div class="fw-bold">Samantha</div>
+                  <small class="text-muted">Admin</small>
+                </div>
+                <img
+                  src="/suya-kabab-app/assets/images/placeholder.png"
+                  alt="User"
+                  class="rounded-circle"
+                  width="40"
+                  height="40"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="card-section d-flex flex-column flex-md-row flex-wrap gap-3 align-items-start"
+          >
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search"
+              style="max-width: 250px"
+            />
+
+            <button class="btn btn-danger">Serch</button>
+
+       
+            <button
+              class="btn btn-success"
+              data-bs-toggle="modal"
+              data-bs-target="#addMenuModal"
+            >
+              + Add Menu
+            </button>
+
+       
+            <div
+              class="modal fade"
+              id="addMenuModal"
+              tabindex="-1"
+              aria-labelledby="addMenuModalLabel"
+              aria-hidden="true"
+            >
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="addMenuModalLabel">
+                      Add New Menu
+                    </h5>
+                    <button
+                      type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+
+                  <div class="modal-body">
+                    <form>
+                    
+                      <div class="mb-3">
+                        <label class="form-label">Item Name</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          placeholder="Special Kabab"
+                        />
+                      </div>
+
+                    
+                      <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select">
+                          <option selected disabled>Select category</option>
+                          <option>Breakfast</option>
+                          <option>Lunch</option>
+                          <option>Dinner</option>
+                        </select>
+                      </div>
+
+                    
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label">Price</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            placeholder="e.g. 99.00"
+                          />
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Discount</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            placeholder="e.g. 10%"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label d-block">Item Tags</label>
+                        <div class="d-flex flex-wrap gap-3">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="breakfast"
+                            />
+                            <label class="form-check-label" for="breakfast"
+                              >Lamb</label
+                            >
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="lunch"
+                            />
+                            <label class="form-check-label" for="lunch"
+                              >Spicy</label
+                            >
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="dinner"
+                            />
+                            <label class="form-check-label" for="dinner"
+                              >Vegan</label
+                            >
+                          </div>
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="takeaway"
+                            />
+                            <label class="form-check-label" for="takeaway"
+                              >Vegetraian</label
+                            >
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label d-block"
+                          >Promotion Badges</label
+                        >
+                        <span class="badge bg-success me-1">Best Seller</span>
+                        <span class="badge bg-warning text-dark me-1"
+                          >New Added</span
+                        >
+                        <span class="badge bg-info text-dark">popular</span>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea
+                          class="form-control"
+                          rows="3"
+                          placeholder="text"
+                        ></textarea>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      data-bs-dismiss="modal"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dropdown" style="margin-left: 7rem">
+              Sort by:
+              <button
+                class="btn btn-outline-dark dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Popular
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Action 1</a></li>
+                <li><a class="dropdown-item" href="#">Action 2</a></li>
+                <li><a class="dropdown-item" href="#">Something else</a></li>
+              </ul>
+            </div>
+            <div class="row mt-5">
+            
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100 border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+            
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+            
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100 border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+             
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+             
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card h-100 border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+            
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card border-0">
+                  <img
+                    src="/suya-kabab-app/assets/images/image.png"
+                    class="card-img-top rounded-top-2 rounded-bottom-2"
+                    alt="Special Chicken"
+                  />
+                  <div class="card-body">
+                    <h4 class="special-fontsize mb-1">Kabab</h4>
+                    <h6 class="special-fontsize mb-2">Chicken</h6>
+                    <p class="text-muted fw-bold">$18.00</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>                                           
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
