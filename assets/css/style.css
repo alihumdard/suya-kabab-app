@@ -83,5 +83,32 @@ body {
   }
 }
 
-
 /*  */
+.background-main {
+  background-color: #fe8c0059;
+}
+.m-left {
+  margin-left: 5rem;
+}
+.review-section {
+  background-color: #f2f5f3;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.jimy {
+  border: 1px solid #ddd;
+  padding: 4px;
+  margin-top: 20px;
+  background-color: #f9f9f9;
+  border-radius: 16px;
+}
+.jimy-img {
+  width: 57px;
+  height: 54px;
+  margin-left: 5px;
+  border-radius: 50%;
+}
+.jimmy-text{
+  font-size: 13px;
+}
