@@ -5,7 +5,7 @@
 }
 body {
   background-color: #e9ecef;
-  zoom: 100%;
+  zoom: 90%;
 }
 .dashboard-item {
   padding: 10px;
@@ -40,7 +40,6 @@ body {
 }
 .card-section {
   background-color: white;
-  width: 95%;
   margin-left: 1.2rem;
   padding: 10px;
   border-radius: 5px;
@@ -52,10 +51,6 @@ body {
   font-size: 15px;
 }
 
-.image-heght {
-  width: 10rem;
-  height: 130px;
-}
 .menue-dashbord {
   display: block;
 }
