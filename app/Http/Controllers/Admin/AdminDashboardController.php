@@ -53,6 +53,6 @@ class AdminDashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'recentOrders', 'recentUsers', 'topProducts'));
+        return view('pages.admin.dashboard', compact('stats', 'recentOrders', 'recentUsers', 'topProducts'));
     }
 }

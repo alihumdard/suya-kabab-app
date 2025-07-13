@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateOrderRequest;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Product;
 use App\Models\Cart;
 use App\Models\DiscountCode;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -41,39 +41,32 @@ class OrderController extends Controller
     /**
      * Create a new order.
      */
-    public function store(Request $request)
+    public function store(CreateOrderRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'delivery_method' => 'required|in:pickup,delivery',
-            'delivery_address' => 'required_if:delivery_method,delivery|string',
-            'delivery_phone' => 'required|string|max:20',
-            'delivery_instructions' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'use_rewards_balance' => 'boolean',
-            'rewards_amount' => 'nullable|numeric|min:0',
-            'discount_code' => 'nullable|string',
-        ]);
+        $user = $request->user();
 
-        if ($validator->fails()) {
+        // Get cart items
+        $cartItems = Cart::with(['product'])
+            ->forUser($user->id)
+            ->get();
+
+        if ($cartItems->isEmpty()) {
             return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+                'error' => true,
+                'message' => 'Cart is empty'
+            ], 400);
         }
 
         DB::beginTransaction();
 
         try {
             $subtotal = 0;
+            $addonTotal = 0;
             $orderItems = [];
 
-            // Validate items and calculate total
-            foreach ($request->items as $item) {
-                $product = Product::find($item['product_id']);
+            // Validate cart items and calculate total
+            foreach ($cartItems as $cartItem) {
+                $product = $cartItem->product;
 
                 if ($product->status !== 'active') {
                     throw new \Exception("Product {$product->name} is not available");
@@ -83,24 +76,31 @@ class OrderController extends Controller
                     throw new \Exception("Product {$product->name} is out of stock");
                 }
 
-                if ($product->track_quantity && $product->quantity < $item['quantity']) {
+                if ($product->track_quantity && $product->quantity < $cartItem->quantity) {
                     throw new \Exception("Insufficient stock for {$product->name}");
                 }
 
-                $itemTotal = $product->price * $item['quantity'];
+                $itemTotal = $product->price * $cartItem->quantity;
                 $subtotal += $itemTotal;
+                $addonTotal += $cartItem->addon_total;
 
                 $orderItems[] = [
                     'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
+                    'quantity' => $cartItem->quantity,
                     'price' => $product->price,
                     'total' => $itemTotal,
+                    'customizations' => $cartItem->customizations,
+                    'special_instructions' => $cartItem->special_instructions,
+                    'addon_total' => $cartItem->addon_total,
                 ];
             }
 
-            // Calculate delivery charges
-            $deliveryCharges = $request->delivery_method === 'delivery' ? 100 : 0;
-            
+            // Add addon total to subtotal
+            $subtotal += $addonTotal;
+
+            // Calculate delivery charges dynamically
+            $deliveryCharges = Setting::calculateDeliveryCharges($subtotal, $request->delivery_method);
+
             // Calculate discount
             $discountAmount = 0;
             $discountCode = null;
@@ -110,7 +110,7 @@ class OrderController extends Controller
                     $discountAmount = $discountCode->calculateDiscount($subtotal);
                 }
             }
-            
+
             // Calculate rewards discount
             $rewardsDiscount = 0;
             if ($request->use_rewards_balance && $request->rewards_amount) {
@@ -118,7 +118,7 @@ class OrderController extends Controller
                 $availableRewards = $user->rewards_balance ?? 0;
                 $rewardsDiscount = min($request->rewards_amount, $availableRewards, $subtotal);
             }
-            
+
             $totalAmount = $subtotal + $deliveryCharges - $discountAmount - $rewardsDiscount;
 
             // Create order
@@ -143,16 +143,16 @@ class OrderController extends Controller
             }
 
             // Update product quantities
-            foreach ($request->items as $item) {
-                $product = Product::find($item['product_id']);
+            foreach ($cartItems as $cartItem) {
+                $product = $cartItem->product;
                 if ($product->track_quantity) {
-                    $product->decrement('quantity', $item['quantity']);
+                    $product->decrement('quantity', $cartItem->quantity);
                 }
             }
 
             // Use rewards balance if applicable
             if ($rewardsDiscount > 0) {
-                $request->user()->useRewardsBalance($rewardsDiscount);
+                $user->useRewardsBalance($rewardsDiscount);
             }
 
             // Mark discount code as used
@@ -160,17 +160,15 @@ class OrderController extends Controller
                 $discountCode->markAsUsed();
             }
 
-            // Clear cart items for the products that were ordered
-            Cart::where('user_id', $request->user()->id)
-                ->whereIn('product_id', array_column($request->items, 'product_id'))
-                ->delete();
+            // Clear all cart items after successful order
+            Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
 
             $order->load(['items.product.images']);
 
             return response()->json([
-                'success' => true,
+                'error' => false,
                 'message' => 'Order created successfully',
                 'data' => [
                     'order' => $order
@@ -181,7 +179,7 @@ class OrderController extends Controller
             DB::rollBack();
 
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => $e->getMessage()
             ], 400);
         }
@@ -198,7 +196,7 @@ class OrderController extends Controller
 
         if (!$order) {
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => 'Order not found'
             ], 404);
         }
@@ -221,15 +219,23 @@ class OrderController extends Controller
 
         if (!$order) {
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => 'Order not found'
             ], 404);
         }
 
         if (!$order->canBeCancelled()) {
+            $message = match ($order->status) {
+                'cancelled' => 'Order is already cancelled',
+                'processing' => 'Order is being processed and cannot be cancelled',
+                'shipped' => 'Order has been shipped and cannot be cancelled',
+                'delivered' => 'Order has been delivered and cannot be cancelled',
+                default => 'Order cannot be cancelled'
+            };
+
             return response()->json([
-                'success' => false,
-                'message' => 'Order cannot be cancelled'
+                'error' => true,
+                'message' => $message
             ], 400);
         }
 
@@ -249,18 +255,16 @@ class OrderController extends Controller
             DB::commit();
 
             return response()->json([
-                'success' => true,
+                'error' => false,
                 'message' => 'Order cancelled successfully',
-                'data' => [
-                    'order' => $order
-                ]
+                'data' => $order
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => 'Failed to cancel order'
             ], 500);
         }
@@ -272,7 +276,7 @@ class OrderController extends Controller
     public function review(Request $request)
     {
         $user = $request->user();
-        
+
         // Get cart items
         $cartItems = Cart::with(['product.images'])
             ->forUser($user->id)
@@ -292,74 +296,55 @@ class OrderController extends Controller
 
         $addonTotal = $cartItems->sum('addon_total');
 
-        // Default delivery method and charges
+        // Delivery method and charges
         $deliveryMethod = $request->get('delivery_method', 'pickup');
-        $deliveryCharges = $deliveryMethod === 'delivery' ? 100 : 0;
+        $deliveryCharges = Setting::calculateDeliveryCharges($subtotal, $deliveryMethod);
+
+        // Calculate discounts using helper function
+        $discountResult = calculateDiscount(
+            $request->discount_code,
+            $subtotal,
+            $user,
+            $request->boolean('use_rewards_balance'),
+            $request->rewards_amount
+        );
+
+        // Return error if discount code is invalid
+        if (!empty($request->discount_code) && !empty($discountResult['error_message'])) {
+            return response()->json([
+                'error' => true,
+                'message' => $discountResult['error_message']
+            ], 400);
+        }
+
+        $totalAmount = $subtotal + $deliveryCharges - $discountResult['discount_amount'] - $discountResult['rewards_discount'];
 
         return response()->json([
-            'success' => true,
+            'error' => false,
             'data' => [
                 'cart_items' => $cartItems,
                 'subtotal' => $subtotal,
                 'addon_total' => $addonTotal,
                 'delivery_charges' => $deliveryCharges,
                 'delivery_method' => $deliveryMethod,
+                'discount_amount' => $discountResult['discount_amount'],
+                'discount_code' => $discountResult['discount_code'],
+                'discount_details' => $discountResult['discount_details'],
+                'rewards_discount' => $discountResult['rewards_discount'],
+                'total_amount' => max(0, $totalAmount),
+                'original_total' => $subtotal + $deliveryCharges,
+                'total_savings' => $discountResult['total_savings'],
                 'user' => [
                     'name' => $user->name,
                     'address' => $user->address,
                     'phone' => $user->phone,
                     'rewards_balance' => $user->rewards_balance ?? 0
-                ],
-                'total_amount' => $subtotal + $deliveryCharges
+                ]
             ]
         ]);
     }
 
-    /**
-     * Validate and apply discount code.
-     */
-    public function validateDiscountCode(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'code' => 'required|string',
-            'subtotal' => 'required|numeric|min:0'
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $discountCode = DiscountCode::where('code', $request->code)->first();
-
-        if (!$discountCode) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid discount code'
-            ], 400);
-        }
-
-        if (!$discountCode->isValid($request->subtotal)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Discount code is not valid or expired'
-            ], 400);
-        }
-
-        $discountAmount = $discountCode->calculateDiscount($request->subtotal);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'discount_code' => $discountCode->code,
-                'discount_amount' => $discountAmount,
-                'new_total' => $request->subtotal - $discountAmount
-            ]
-        ]);
-    }
 
     /**
      * Calculate order total with all discounts and charges.
@@ -382,7 +367,7 @@ class OrderController extends Controller
         }
 
         $user = $request->user();
-        
+
         // Get cart items
         $cartItems = Cart::with(['product.images'])
             ->forUser($user->id)
@@ -402,26 +387,27 @@ class OrderController extends Controller
 
         $addonTotal = $cartItems->sum('addon_total');
 
-        // Calculate delivery charges
-        $deliveryCharges = $request->delivery_method === 'delivery' ? 100 : 0;
+        // Calculate delivery charges dynamically
+        $deliveryCharges = Setting::calculateDeliveryCharges($subtotal, $request->delivery_method);
 
-        // Calculate discount
-        $discountAmount = 0;
-        if ($request->discount_code) {
-            $discountCode = DiscountCode::where('code', $request->discount_code)->first();
-            if ($discountCode && $discountCode->isValid($subtotal)) {
-                $discountAmount = $discountCode->calculateDiscount($subtotal);
-            }
+        // Calculate discounts using helper function
+        $discountResult = calculateDiscount(
+            $request->discount_code,
+            $subtotal,
+            $user,
+            $request->boolean('use_rewards_balance'),
+            $request->rewards_amount
+        );
+
+        // Return error if discount code is invalid
+        if (!empty($request->discount_code) && !empty($discountResult['error_message'])) {
+            return response()->json([
+                'success' => false,
+                'message' => $discountResult['error_message']
+            ], 422);
         }
 
-        // Calculate rewards discount
-        $rewardsDiscount = 0;
-        if ($request->use_rewards_balance && $request->rewards_amount) {
-            $availableRewards = $user->rewards_balance ?? 0;
-            $rewardsDiscount = min($request->rewards_amount, $availableRewards, $subtotal);
-        }
-
-        $totalAmount = $subtotal + $deliveryCharges - $discountAmount - $rewardsDiscount;
+        $totalAmount = $subtotal + $deliveryCharges - $discountResult['discount_amount'] - $discountResult['rewards_discount'];
 
         return response()->json([
             'success' => true,
@@ -429,9 +415,11 @@ class OrderController extends Controller
                 'subtotal' => $subtotal,
                 'addon_total' => $addonTotal,
                 'delivery_charges' => $deliveryCharges,
-                'discount_amount' => $discountAmount,
-                'rewards_discount' => $rewardsDiscount,
+                'discount_amount' => $discountResult['discount_amount'],
+                'discount_details' => $discountResult['discount_details'],
+                'rewards_discount' => $discountResult['rewards_discount'],
                 'total_amount' => max(0, $totalAmount),
+                'total_savings' => $discountResult['total_savings'],
                 'available_rewards' => $user->rewards_balance ?? 0
             ]
         ]);

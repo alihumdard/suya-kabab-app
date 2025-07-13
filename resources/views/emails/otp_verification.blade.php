@@ -1,294 +1,156 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ $greeting ?? 'OTP Verification' }} - {{ $appName }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <style>
-        * {
+        /* Base */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #2d3748;
+            height: 100vh;
+            line-height: 1.6;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333333;
-            background-color: #f8f9fa;
-        }
-
-        .email-container {
+        .container {
+            width: 100%;
             max-width: 600px;
             margin: 0 auto;
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
-
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin: 20px 0;
+        }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 30px;
             text-align: center;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 40px 30px;
-        }
-
-        .greeting {
-            font-size: 24px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-
-        .message {
-            font-size: 16px;
-            color: #555555;
             margin-bottom: 30px;
-            line-height: 1.7;
         }
-
-        .otp-container {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            margin: 30px 0;
-            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);
-        }
-
-        .otp-label {
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .otp-code {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: 8px;
-            padding: 20px 30px;
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
+        .logo {
+            width: 180px;
+            height: auto;
+            margin-bottom: 20px;
             display: inline-block;
-            margin: 10px 0;
         }
-
-        .otp-expires {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            margin-top: 15px;
+        .title {
+            color: #000000;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
         }
-
-        .security-notice {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
+        .message {
+            color: #4a5568;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        .otp-container {
+            background-color: #F0F9FF;
+            border: 2px solid #0EA5E9;
             border-radius: 8px;
             padding: 20px;
-            margin: 30px 0;
+            margin: 25px 0;
+            text-align: center;
         }
-
-        .security-notice h3 {
-            color: #856404;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
+        .otp-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #0EA5E9;
+            letter-spacing: 4px;
+            margin: 10px 0;
         }
-
-        .security-notice p {
-            color: #856404;
-            font-size: 14px;
-            margin: 0;
+        .important-notice {
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 4px;
         }
-
-        .security-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-        }
-
         .footer {
-            background-color: #f8f9fa;
-            padding: 30px;
             text-align: center;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .footer p {
-            color: #6c757d;
+            color: #718096;
             font-size: 14px;
-            margin-bottom: 10px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
         }
-
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        .social-links {
-            margin-top: 20px;
-        }
-
-        .social-links a {
-            display: inline-block;
-            margin: 0 10px;
-            padding: 8px;
-            background-color: #667eea;
+        .button {
+            display: block;
+            background-color: #4F46E5;
             color: white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            line-height: 24px;
+            padding: 12px 24px;
+            border-radius: 6px;
             text-decoration: none;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            margin: 20px auto;
+            text-align: center;
+            width: fit-content;
         }
-
-        .social-links a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        .button:hover {
+            background-color: #4338CA;
         }
-
-        .divider {
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
-            margin: 30px 0;
-        }
-
-        @media (max-width: 600px) {
-            .email-container {
-                margin: 0;
-                box-shadow: none;
-            }
-
-            .header,
-            .content,
-            .footer {
-                padding: 30px 20px;
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .greeting {
-                font-size: 20px;
-            }
-
-            .otp-code {
-                font-size: 28px;
-                letter-spacing: 6px;
-                padding: 15px 20px;
-            }
+        .icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            display: block;
         }
     </style>
 </head>
-
 <body>
-    <div class="email-container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🍢 {{ $appName }}</h1>
-            <p>Your favorite Suya & Kabab delivery service</p>
-        </div>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <img src="{{ asset('assets/images/Logo.png') }}" alt="Suya Kabab" class="logo">
+                <h1 class="title">Email Verification</h1>
+            </div>
 
-        <!-- Content -->
-        <div class="content">
-            <h2 class="greeting">{{ $greeting }}</h2>
+            <div class="message">
+                @if($name && !is_null($name))
+                    Dear <strong>{{$name}}</strong>,<br><br>
+                @else
+                    Hello,<br><br>
+                @endif
+                
+                @if($type == 'email_verification')
+                    Thank you for signing up with Suya Kabab! Please use the verification code below to verify your email address and complete your registration.
+                @elseif($type == 'password_reset')
+                    You have requested to reset your password. Please use the verification code below to proceed with your password reset.
+                @elseif($type == 'login_verification')
+                    A login attempt was made to your account. Please use the verification code below to complete your login.
+                @else
+                    Please use the verification code below to complete your request.
+                @endif
+            </div>
 
-            @if($userName)
-                <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
-                    Hello <strong>{{ $userName }}</strong>,
-                </p>
-            @endif
-
-            <p class="message">{{ $message }}</p>
-
-            <!-- OTP Container -->
             <div class="otp-container">
-                <div class="otp-label">Your Verification Code</div>
+                <p style="margin: 0; font-size: 16px; color: #4a5568;">Your verification code is:</p>
                 <div class="otp-code">{{ $otp }}</div>
-                <div class="otp-expires">⏰ This code expires in 15 minutes</div>
+                <p style="margin: 0; font-size: 14px; color: #718096;">This code will expire in 15 minutes</p>
             </div>
 
-            <!-- Security Notice -->
-            <div class="security-notice">
-                <h3>
-                    <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                    Security Notice
-                </h3>
-                <p>
-                    Never share this code with anyone. {{ $appName }} will never ask for your verification code via
-                    phone or email.
-                    If you didn't request this code, please ignore this email or contact our support team.
-                </p>
+            <div class="important-notice">
+                <strong>Security Notice:</strong><br>
+                • This code is valid for 15 minutes only<br>
+                • Do not share this code with anyone<br>
+                • If you didn't request this code, please ignore this email
             </div>
 
-            <div class="divider"></div>
-
-            @if($type === 'email_verification')
-                <p style="text-align: center; color: #666; font-size: 14px;">
-                    After verification, you'll be able to enjoy our delicious Suya and Kabab varieties!
-                </p>
-            @elseif($type === 'password_reset')
-                <p style="text-align: center; color: #666; font-size: 14px;">
-                    If you didn't request a password reset, no further action is required.
-                </p>
-            @endif
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>&copy; {{ date('Y') }} {{ $appName }}. All rights reserved.</p>
-            <p>
-                Need help? <a href="mailto:support@suyakabab.com">Contact Support</a> |
-                <a href="{{ $appUrl }}">Visit Website</a>
-            </p>
-
-            <div class="social-links">
-                <a href="#" title="Facebook">📘</a>
-                <a href="#" title="Instagram">📷</a>
-                <a href="#" title="Twitter">🐦</a>
-                <a href="#" title="WhatsApp">💬</a>
+            <div class="message">
+                <p>If you have any questions or need assistance, please contact us at <a href="mailto:support@suyakabab.com">support@suyakabab.com</a>.</p>
             </div>
 
-            <p style="margin-top: 20px; font-size: 12px; color: #999;">
-                This is an automated message, please do not reply to this email.
-            </p>
+            <div class="footer">
+                <p>Best regards,<br>Team Suya Kabab</p>
+                <p>© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            </div>
         </div>
     </div>
 </body>
-
-</html>
+</html> 

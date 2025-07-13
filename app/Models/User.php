@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -22,7 +23,8 @@ class User extends Authenticatable
         'email_verified_at',
         'password',
         'phone',
-        'avatar',
+        'gender',
+        'profile_image',
         'date_of_birth',
         'address',
         'city',
@@ -58,6 +60,18 @@ class User extends Authenticatable
             'rewards_balance' => 'decimal:2',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the profile image URL.
+     */
+    public function getProfileImageAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+        
+        return Storage::disk('public')->url($value);
     }
 
     /**

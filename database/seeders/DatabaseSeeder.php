@@ -14,10 +14,16 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             DiscountCodeSeeder::class,
+            SettingsSeeder::class,
+            AddonCategorySeeder::class,
+            ProductAddonSeeder::class,
+            ProductAddonPivotSeeder::class,
         ]);
 
         $this->command->info('Database seeded successfully!');
         $this->command->info('Admin Login: admin@suyakabab.com / password');
         $this->command->info('User Login: user@suyakabab.com / password');
+        $this->command->info('Added 5 addon categories and 25 product addons');
+        $this->command->info('All products now have available addons for customization');
     }
 }

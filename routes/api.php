@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Admin\SettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +42,7 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('profile', [AuthController::class, 'profile']);
-        Route::put('profile', [AuthController::class, 'updateProfile']);
+        Route::post('profile', [AuthController::class, 'updateProfile']); // Changed to POST for multipart support
     });
 });
 
@@ -51,16 +52,20 @@ Route::get('products/{id}', [ProductController::class, 'show']);
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
 
+// App Settings
+Route::get('settings/delivery', [SettingsController::class, 'getDeliverySettings']);
+
 // Protected API Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('cart', CartController::class);
-    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
-    Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
 
-    // Order review and calculation routes
+    // Order review and calculation routes (must come before resource routes)
     Route::get('orders/review', [OrderController::class, 'review']);
+    Route::post('orders/review', [OrderController::class, 'review']);
     Route::post('orders/calculate-total', [OrderController::class, 'calculateTotal']);
-    Route::post('orders/validate-discount', [OrderController::class, 'validateDiscountCode']);
+
+    Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
+    Route::post('orders/cancel/{id}', [OrderController::class, 'cancel']);
 
     // User profile route (alternative)
     Route::get('/user', function (Request $request) {

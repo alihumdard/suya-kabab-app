@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddToCartRequest;
 use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -26,7 +28,7 @@ class CartController extends Controller
         $addonTotal = $cartItems->sum('addon_total');
 
         return response()->json([
-            'success' => true,
+            'error' => false,
             'data' => [
                 'cart_items' => $cartItems,
                 'subtotal' => $subtotal,
@@ -39,36 +41,15 @@ class CartController extends Controller
     /**
      * Add item to cart.
      */
-    public function store(Request $request)
+    public function store(AddToCartRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $product = Product::find($request->product_id);
+        $product = Product::findOrFail($request->product_id);
 
         // Check if product is active
-        if ($product->status !== 'active') {
+        if ($product->status !== 'active' || !$product->isInStock()) {
             return response()->json([
-                'success' => false,
-                'message' => 'Product is not available'
-            ], 400);
-        }
-
-        // Check stock
-        if (!$product->isInStock()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product is out of stock'
+                'error' => true,
+                'message' => 'Product is not available or out of stock'
             ], 400);
         }
 
@@ -77,10 +58,34 @@ class CartController extends Controller
             ->where('product_id', $request->product_id)
             ->first();
 
+        // Calculate addon total
+        $addonTotal = 0;
+        $customizations = [];
+
+        if ($request->has('customizations')) {
+            foreach ($request->customizations as $customization) {
+                $addon = \App\Models\ProductAddon::find($customization['id']);
+                if ($addon) {
+                    $customizations[] = [
+                        'id' => $addon->id,
+                        'name' => $addon->name,
+                        'price' => $addon->price,
+                        'quantity' => $customization['quantity'],
+                        'addon_category_id' => $addon->addon_category_id,
+                        'category_name' => $addon->category->name
+                    ];
+                    $addonTotal += $addon->price * $customization['quantity'];
+                }
+            }
+        }
+
         if ($cartItem) {
             // Update existing item
             $cartItem->update([
-                'quantity' => $cartItem->quantity + $request->quantity
+                'quantity' => $cartItem->quantity + $request->quantity,
+                'customizations' => $customizations,
+                'special_instructions' => $request->special_instructions,
+                'addon_total' => $addonTotal
             ]);
         } else {
             // Create new cart item
@@ -88,13 +93,16 @@ class CartController extends Controller
                 'user_id' => $request->user()->id,
                 'product_id' => $request->product_id,
                 'quantity' => $request->quantity,
+                'customizations' => $customizations,
+                'special_instructions' => $request->special_instructions,
+                'addon_total' => $addonTotal
             ]);
         }
 
         $cartItem->load('product.images');
 
         return response()->json([
-            'success' => true,
+            'error' => false,
             'message' => 'Item added to cart',
             'data' => [
                 'cart_item' => $cartItem
@@ -109,21 +117,20 @@ class CartController extends Controller
     {
         $cartItem = Cart::with(['product.images'])
             ->where('user_id', $request->user()->id)
-            ->find($id);
+            ->where('id', $id)
+            ->first();
 
         if (!$cartItem) {
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => 'Cart item not found'
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
-            'data' => [
-                'cart_item' => $cartItem
-            ]
-        ]);
+            'error' => false,
+            'data' => $cartItem
+        ], 200);
     }
 
     /**
@@ -131,38 +138,53 @@ class CartController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $user = Auth::user();
         $validator = Validator::make($request->all(), [
-            'quantity' => 'required|integer|min:1',
+
+            'action' => ['required', 'string', 'in:increment,decrement'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'error' => true,
+                'message' => $validator->errors()
             ], 422);
         }
 
-        $cartItem = Cart::where('user_id', $request->user()->id)
-            ->find($id);
+        $cartItem = Cart::where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
 
         if (!$cartItem) {
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => 'Cart item not found'
             ], 404);
         }
 
-        $cartItem->update(['quantity' => $request->quantity]);
+        // Handle increment/decrement action
+        if ($request->action === 'increment') {
+            $newQuantity = $cartItem->quantity + 1;
+        } else { // decrement
+            $newQuantity = $cartItem->quantity - 1;
+
+            // Prevent quantity from going below 1
+            if ($newQuantity < 1) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Quantity cannot be less than 1. Use delete endpoint to remove item.'
+                ], 400);
+            }
+        }
+
+        $cartItem->update(['quantity' => $newQuantity]);
         $cartItem->load('product.images');
 
         return response()->json([
-            'success' => true,
+            'error' => false,
             'message' => 'Cart item updated',
-            'data' => [
-                'cart_item' => $cartItem
-            ]
-        ]);
+            'data' => $cartItem
+        ], 200);
     }
 
     /**
@@ -170,12 +192,14 @@ class CartController extends Controller
      */
     public function destroy($id, Request $request)
     {
-        $cartItem = Cart::where('user_id', $request->user()->id)
-            ->find($id);
+        $user = Auth::user();
+        $cartItem = Cart::where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
 
         if (!$cartItem) {
             return response()->json([
-                'success' => false,
+                'error' => true,
                 'message' => 'Cart item not found'
             ], 404);
         }
@@ -183,8 +207,8 @@ class CartController extends Controller
         $cartItem->delete();
 
         return response()->json([
-            'success' => true,
+            'error' => false,
             'message' => 'Item removed from cart'
-        ]);
+        ], 200);
     }
 }
