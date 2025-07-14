@@ -94,7 +94,7 @@
     </div>
 
     <!-- Modal -->
-    <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto" style="padding-top: 100px;">
         <div class="bg-white w-full max-w-5xl mx-4 p-6 rounded-lg relative" @click.away="showModal = false">
             <!-- Close Button -->
             <button @click="showModal = false" class="absolute top-3 right-3 text-red-500 text-xl">
@@ -119,6 +119,19 @@
                             <option>Burger</option>
                         </select>
                     </div>
+
+                      <div>
+                        <label class="block text-sm font-medium">Slug</label>
+                        <input type="text" placeholder="special-kebab"
+                            class="w-full mt-1 px-4 py-2 border rounded-md" />
+                    </div>
+                     <div class="">
+                            <label class="block text-sm font-medium">Status</label>
+                            <select class="w-full mt-1 px-4 py-2 border rounded-md">
+                                <option>Active</option>
+                                <option>Inactive</option>
+                            </select>
+                        </div>
 
                     <div class="flex gap-4">
                         <div class="w-1/2">

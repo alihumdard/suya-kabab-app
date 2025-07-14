@@ -94,7 +94,7 @@
     </div>
 
     <!-- Modal -->
-    <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto" style="padding-top: 300px;">
         <div class="bg-white w-full max-w-5xl mx-4 p-6 rounded-lg relative" @click.away="showModal = false">
             <!-- Close Button -->
             <button @click="showModal = false" class="absolute top-3 right-3 text-red-500 text-xl">
@@ -107,17 +107,35 @@
                 <!-- Left Form -->
                 <div class="md:col-span-2 space-y-4">
                     <div>
+                        <label class="block text-sm font-medium">Category</label>
+                        <select class="w-full mt-1 px-4 py-2 border rounded-md">
+                            <option>Kebab</option>
+                            <option>Burger</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium">Item Name</label>
                         <input type="text" placeholder="Special Kebab"
                             class="w-full mt-1 px-4 py-2 border rounded-md" />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium">Category</label>
-                        <select class="w-full mt-1 px-4 py-2 border rounded-md">
-                            <option>Kebab</option>
-                            <option>Burger</option>
-                        </select>
+                        <label class="block text-sm font-medium">Slug</label>
+                        <input type="text" placeholder="special-kebab"
+                            class="w-full mt-1 px-4 py-2 border rounded-md" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium">Description</label>
+                        <textarea placeholder="Detailed description"
+                            class="w-full mt-1 px-4 py-2 border rounded-md"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium">Short Description</label>
+                        <input type="text" placeholder="Brief description"
+                            class="w-full mt-1 px-4 py-2 border rounded-md" />
                     </div>
 
                     <div class="flex gap-4">
@@ -126,8 +144,35 @@
                             <input type="text" placeholder="19.90" class="w-full mt-1 px-4 py-2 border rounded-md" />
                         </div>
                         <div class="w-1/2">
-                            <label class="block text-sm font-medium">Discount Price ($)</label>
-                            <input type="text" placeholder="17.90" class="w-full mt-1 px-4 py-2 border rounded-md" />
+                            <label class="block text-sm font-medium">Cost Price ($)</label>
+                            <input type="text" placeholder="12.90" class="w-full mt-1 px-4 py-2 border rounded-md" />
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium">SKU</label>
+                            <input type="text" placeholder="KB-001" class="w-full mt-1 px-4 py-2 border rounded-md" />
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium">Status</label>
+                            <select class="w-full mt-1 px-4 py-2 border rounded-md">
+                                <option>Active</option>
+                                <option>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium">Quantity</label>
+                            <input type="number" placeholder="100" class="w-full mt-1 px-4 py-2 border rounded-md" />
+                        </div>
+                        <div class="w-1/2 flex items-center pt-6">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2">
+                                <span class="text-sm font-medium">Track Quantity</span>
+                            </label>
                         </div>
                     </div>
 
@@ -148,11 +193,6 @@
                             <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">New Added</span>
                             <span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm">Popular</span>
                         </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium">Description</label>
-                        <input type="text" placeholder="Text" class="w-full mt-1 px-4 py-2 border rounded-md" />
                     </div>
                 </div>
 
