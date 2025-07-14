@@ -27,33 +27,33 @@
 
         <!-- Navigation -->
         <nav class="flex-1 py-6 space-y-2">
-            <a href="{{ route('dashboard') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-home w-5 mr-3"></i> Dashboard
             </a>
 
-            <a href="{{ route('orders') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('orders') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.orders') ? 'active' : '' }}">
                 <i class="fas fa-clipboard-list w-5 mr-3"></i> Orders
             </a>
 
-            <a href="{{ route('menu') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('menu') ? 'active' : '' }}">
+            <a href="{{ route('admin.menu') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.menu') ? 'active' : '' }}">
                 <i class="fas fa-utensils w-5 mr-3"></i> Menu
             </a>
 
-            <a href="{{ route('product') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('product') ? 'active' : '' }}">
+            <a href="{{ route('admin.product') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.product') ? 'active' : '' }}">
                 <i class="fas fa-box-open w-5 mr-3"></i> Products
             </a>
 
-            <a href="{{ route('category') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('category') ? 'active' : '' }}">
+            <a href="{{ route('admin.category') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.category') ? 'active' : '' }}">
                 <i class="fas fa-th-large w-5 mr-3"></i> Category
             </a>
 
             <!-- Components Dropdown -->
-            <div x-data="{ open: {{ request()->routeIs('form') || request()->routeIs('table') || request()->routeIs('card') ? 'true' : 'false' }} }"
+            <div x-data="{ open: {{ request()->routeIs('admin.form') || request()->routeIs('admin.table') || request()->routeIs('admin.card') ? 'true' : 'false' }} }"
                 class="">
                 <div class=" hover:bg-red-100 hover:text-[#E73C36] px-6">
                     <button @click="open = !open"
@@ -71,16 +71,16 @@
                 </div>
                 <!-- Dropdown Items -->
                 <div x-show="open" x-collapse class="mt-2 pl-8 space-y-1 text-sm">
-                    <a href="{{ route('form') }}"
-                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('form') ? 'active' : '' }}">
+                    <a href="{{ route('admin.form') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.form') ? 'active' : '' }}">
                         Form
                     </a>
-                    <a href="{{ route('table') }}"
-                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('table') ? 'active' : '' }}">
+                    <a href="{{ route('admin.table') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.table') ? 'active' : '' }}">
                         Table
                     </a>
-                    <a href="{{ route('card') }}"
-                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('card') ? 'active' : '' }}">
+                    <a href="{{ route('admin.card') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.card') ? 'active' : '' }}">
                         Card
                     </a>
                 </div>
@@ -109,33 +109,33 @@
 
 <!-- Sidebar Styles -->
 <style>
-html,
-body {
-    height: 100%;
-    background-color: white;
-}
-
-.sidebar-link.active {
-    background-color: #FDF7F2;
-    color: #E73C36;
-    font-weight: 600;
-}
-
-.sidebar-link.active svg {
-    stroke: #E73C36;
-}
-
-@media (max-width: 768px) {
-    #sidebar.open {
-        transform: translateX(0);
+    html,
+    body {
+        height: 100%;
+        background-color: white;
     }
 
-    .overlay.open {
-        display: block !important;
+    .sidebar-link.active {
+        background-color: #FDF7F2;
+        color: #E73C36;
+        font-weight: 600;
     }
 
-    .sidebar-close-button {
-        display: block !important;
+    .sidebar-link.active svg {
+        stroke: #E73C36;
     }
-}
+
+    @media (max-width: 768px) {
+        #sidebar.open {
+            transform: translateX(0);
+        }
+
+        .overlay.open {
+            display: block !important;
+        }
+
+        .sidebar-close-button {
+            display: block !important;
+        }
+    }
 </style>
