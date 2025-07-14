@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Setting;
 
 class Order extends Model
 {
@@ -96,11 +97,11 @@ class Order extends Model
     }
 
     /**
-     * Generate unique order number.
+     * Generate unique order number using UUID.
      */
     public static function generateOrderNumber()
     {
-        return generateOrderNumber();
+        return (string) Str::uuid();
     }
 
     /**
@@ -152,7 +153,7 @@ class Order extends Model
             return 0;
         }
 
-        // This can be dynamic based on distance, business rules, etc.
-        return 100; // Default delivery charge
+        // Use dynamic delivery charges from settings
+        return Setting::calculateDeliveryCharges($this->subtotal, $this->delivery_method);
     }
 }

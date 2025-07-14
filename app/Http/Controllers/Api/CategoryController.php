@@ -20,9 +20,8 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'categories' => $categories
-            ]
+            'data' =>  $categories
+            
         ]);
     }
 
@@ -46,9 +45,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'category' => $category
-            ]
+            'data' => $category
         ]);
     }
 } 

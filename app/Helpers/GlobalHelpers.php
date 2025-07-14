@@ -43,7 +43,6 @@ if (!function_exists('sendOTP')) {
             Log::info('OTP saved to database', [
                 'email' => $email,
                 'otp_id' => $otpRecord->id,
-                'expires_at' => $otpRecord->expires_at->toDateTimeString()
             ]);
 
         } catch (\Exception $e) {
@@ -85,7 +84,7 @@ if (!function_exists('sendOTP')) {
             ]);
 
             Notification::route('mail', $email)
-                ->notify(new UserOtpVerification($otp, $type, $userName));
+                ->notify(new UserOtpVerification($email, $userName, $otp, $type));
 
             Log::info('Notification sent successfully', [
                 'email' => $email,
@@ -102,6 +101,76 @@ if (!function_exists('sendOTP')) {
                 'line' => $e->getLine()
             ]);
         }
+    }
+}
+
+if (!function_exists('calculateDiscount')) {
+    /**
+     * Calculate discount amount and validate discount codes.
+     *
+     * @param string|null $discountCode
+     * @param float $subtotal
+     * @param \App\Models\User|null $user
+     * @param bool $useRewardsBalance
+     * @param float|null $rewardsAmount
+     * @return array
+     */
+    function calculateDiscount($discountCode = null, $subtotal = 0, $user = null, $useRewardsBalance = false, $rewardsAmount = null)
+    {
+        $result = [
+            'discount_amount' => 0,
+            'discount_code' => $discountCode,
+            'discount_details' => null,
+            'rewards_discount' => 0,
+            'total_savings' => 0,
+            'is_valid' => false,
+            'error_message' => null
+        ];
+
+        // Validate and calculate discount code
+        if (!empty($discountCode)) {
+            $discountCodeModel = \App\Models\DiscountCode::where('code', $discountCode)->first();
+
+            if (!$discountCodeModel) {
+                $result['error_message'] = 'Invalid discount code';
+                return $result;
+            }
+
+            if (!$discountCodeModel->isValid($subtotal)) {
+                $result['error_message'] = 'Discount code is not valid or expired';
+                return $result;
+            }
+
+            $discountAmount = $discountCodeModel->calculateDiscount($subtotal);
+
+            $result['discount_amount'] = $discountAmount;
+            $result['discount_details'] = [
+                'code' => $discountCodeModel->code,
+                'type' => $discountCodeModel->type,
+                'value' => $discountCodeModel->value,
+                'minimum_amount' => $discountCodeModel->minimum_amount,
+                'maximum_discount' => $discountCodeModel->maximum_discount,
+                'calculated_discount' => $discountAmount
+            ];
+            $result['is_valid'] = true;
+        }
+
+        // Calculate rewards discount
+        if ($useRewardsBalance && $rewardsAmount && $user) {
+            $availableRewards = $user->rewards_balance ?? 0;
+            $result['rewards_discount'] = min($rewardsAmount, $availableRewards, $subtotal);
+        }
+
+        // Calculate total savings
+        $result['total_savings'] = $result['discount_amount'] + $result['rewards_discount'];
+
+        Log::info('Discount result', [
+            'discount_amount' => $result['discount_amount'],
+            'rewards_discount' => $result['rewards_discount'],
+            'total_savings' => $result['total_savings']
+        ]);
+
+        return $result;
     }
 }
 

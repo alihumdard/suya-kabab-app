@@ -15,7 +15,7 @@ class AdminAuthController extends Controller
      */
     public function showLoginForm()
     {
-        return view('admin.auth.login');
+        return view('pages.auth.login');
     }
 
     /**
@@ -24,8 +24,8 @@ class AdminAuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
         if ($validator->fails()) {
