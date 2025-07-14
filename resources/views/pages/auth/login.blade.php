@@ -65,7 +65,8 @@
 
             <p class="text-center text-sm text-gray-600 mt-6">
                 Don't have an account?
-                <a href="{{ route('admin.register') }}" class="text-[#229a76] hover:underline font-medium">Register</a>
+                <a href="{{ route('admin.register.create') }}"
+                    class="text-[#229a76] hover:underline font-medium">Register</a>
             </p>
         </form>
     </div>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Admin;
 use App\Models\OtpVerification;
 use App\Notifications\UserOtpVerification;
 use Illuminate\Support\Facades\Notification;
@@ -13,13 +14,15 @@ if (!function_exists('sendOTP')) {
      *
      * @param string $email
      * @param string $type
+     * @param string $userType 'user' or 'admin'
      * @return void
      */
-    function sendOTP($email, $type)
+    function sendOTP($email, $type, $userType = 'user')
     {
         Log::info('Starting OTP send process', [
             'email' => $email,
             'type' => $type,
+            'user_type' => $userType,
             'timestamp' => Carbon::now()->toDateTimeString()
         ]);
 
@@ -28,7 +31,8 @@ if (!function_exists('sendOTP')) {
         Log::info('Generated OTP', [
             'email' => $email,
             'otp' => $otp,
-            'type' => $type
+            'type' => $type,
+            'user_type' => $userType
         ]);
 
         // Save OTP to database
@@ -55,12 +59,18 @@ if (!function_exists('sendOTP')) {
         }
 
         try {
-            // Get user for personalized notification
-            $user = User::where('email', $email)->first();
+            // Get user for personalized notification based on user type
+            if ($userType === 'admin') {
+                $user = Admin::where('email', $email)->first();
+            } else {
+                $user = User::where('email', $email)->first();
+            }
+
             $userName = $user ? $user->name : null;
 
             Log::info('User found for notification', [
                 'email' => $email,
+                'user_type' => $userType,
                 'user_id' => $user ? $user->id : null,
                 'user_name' => $userName
             ]);
@@ -80,6 +90,7 @@ if (!function_exists('sendOTP')) {
                 'email' => $email,
                 'otp' => $otp,
                 'type' => $type,
+                'user_type' => $userType,
                 'user_name' => $userName
             ]);
 
@@ -89,7 +100,8 @@ if (!function_exists('sendOTP')) {
             Log::info('Notification sent successfully', [
                 'email' => $email,
                 'otp' => $otp,
-                'type' => $type
+                'type' => $type,
+                'user_type' => $userType
             ]);
 
         } catch (\Exception $e) {
