@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\SettingsController;
 
 // Public Routes
@@ -19,12 +21,16 @@ Route::prefix('admin')->group(function () {
     // Password reset routes
     Route::view('password/reset', 'pages.auth.password.email')->name('admin.password.request');
     Route::post('password/email', [AdminAuthController::class, 'sendPasswordReset'])->name('admin.password.email');
-    Route::view('password/reset/{token}', 'pages.auth.password.reset')->name('admin.password.reset');
+    Route::get('password/otp/{email}', [AdminAuthController::class, 'showPasswordOTP'])->name('admin.password.otp.show');
+    Route::post('password/otp/verify', [AdminAuthController::class, 'verifyPasswordOTP'])->name('admin.password.otp.verify');
+    Route::get('password/reset/{email}/{otp}', [AdminAuthController::class, 'showPasswordReset'])->name('admin.password.reset');
     Route::post('password/reset', [AdminAuthController::class, 'resetPassword'])->name('admin.password.update');
 
     // Registration routes (if needed)
-    Route::view('register', 'pages.auth.signup')->name('admin.register');
-    Route::post('register', [AdminAuthController::class, 'register']);
+    Route::get('register', function () {
+        return view('pages.auth.signup');
+    })->name('admin.register.create');
+    Route::post('register', [AdminAuthController::class, 'register'])->name('admin.register');
     Route::view('register/otp/{email}', 'pages.auth.password.otp')->name('admin.register.otp.show');
     Route::post('register/otp/verify', [AdminAuthController::class, 'verifyOTP'])->name('admin.register.otp.verify');
 
@@ -41,13 +47,11 @@ Route::prefix('admin')->group(function () {
             return view('pages.admin.menu');
         })->name('admin.menu');
 
-        Route::get('product', function () {
-            return view('pages.admin.product');
-        })->name('admin.product');
+        Route::get('product', [ProductController::class, 'index'])->name('admin.product');
+        Route::post('product', [ProductController::class, 'store'])->name('admin.product.store');
 
-        Route::get('category', function () {
-            return view('pages.admin.category');
-        })->name('admin.category');
+        Route::get('category', [CategoryController::class, 'index'])->name('admin.category');
+        Route::post('category', [CategoryController::class, 'store'])->name('admin.category.store');
 
         // Admin Components
         Route::get('form', function () {

@@ -170,7 +170,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = User::where('email', $request->email)->where('email_verified_at', '!=', null)->first();
+        $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
@@ -241,20 +241,12 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = User::where('email', $request->email)->where('email_verified_at', null)->first();
+        $user = User::where('email', $request->email)->first();
         if (!$user) {
             return response()->json([
                 'error' => true,
                 'message' => 'User not found'
             ], 404);
-        }
-
-        // Check if email is already verified
-        if (!is_null($user->email_verified_at) && !empty($user->email_verified_at)) {
-            return response()->json([
-                'error' => true,
-                'message' => 'Email is already verified'
-            ], 400);
         }
 
         // Check rate limiting (max 5 OTPs per hour)
