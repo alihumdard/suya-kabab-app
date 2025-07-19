@@ -12,7 +12,6 @@ return new class extends Migration {
     {
         Schema::create('product_addons', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('addon_category_id')->constrained()->onDelete('cascade');
             $table->string('name'); // e.g., "Tomato", "Regular Fries", "Coca Cola"
             $table->string('slug')->unique();
             $table->text('description')->nullable();

@@ -21,20 +21,15 @@ class Product extends Model
         'description',
         'short_description',
         'price',
-        'compare_price',
-        'cost_price',
-        'sku',
-        'barcode',
         'track_quantity',
         'quantity',
         'allow_backorder',
         'weight',
-        'dimensions',
         'status',
         'featured',
-        'meta_title',
-        'meta_description',
     ];
+
+
 
     /**
      * Get the attributes that should be cast.
@@ -45,8 +40,6 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
-            'compare_price' => 'decimal:2',
-            'cost_price' => 'decimal:2',
             'weight' => 'decimal:2',
             'track_quantity' => 'boolean',
             'allow_backorder' => 'boolean',
@@ -67,7 +60,23 @@ class Product extends Model
      */
     public function images()
     {
-        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+        return $this->morphMany(Image::class, 'imageable')->active()->orderBy('created_at');
+    }
+
+    /**
+     * Get the main image for the product.
+     */
+    public function getMainImageAttribute()
+    {
+        return $this->images()->first();
+    }
+
+    /**
+     * Get the main image URL for the product.
+     */
+    public function getMainImageUrlAttribute()
+    {
+        return $this->main_image?->url;
     }
 
     /**
@@ -75,7 +84,7 @@ class Product extends Model
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(Review::class)->where('status', 'approved');
     }
 
     /**
@@ -84,14 +93,6 @@ class Product extends Model
     public function approvedReviews()
     {
         return $this->hasMany(Review::class)->where('status', 'approved');
-    }
-
-    /**
-     * Get the product's cart items.
-     */
-    public function cartItems()
-    {
-        return $this->hasMany(Cart::class);
     }
 
     /**
@@ -121,6 +122,14 @@ class Product extends Model
             ->with('category')
             ->get()
             ->groupBy('category.name');
+    }
+
+    /**
+     * Get users who favorited this product.
+     */
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'user_favorites')->withTimestamps();
     }
 
     /**
@@ -187,11 +196,5 @@ class Product extends Model
         return $this->quantity > 0 || $this->allow_backorder;
     }
 
-    /**
-     * Get the product's main image.
-     */
-    public function getMainImageAttribute()
-    {
-        return $this->images()->first()?->image;
-    }
+
 }

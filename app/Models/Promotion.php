@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
-class Category extends Model
+class Promotion extends Model
 {
     use HasFactory;
 
@@ -15,31 +16,16 @@ class Category extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'slug',
+        'title',
         'description',
         'status',
-
+        'button_text',
+        'button_url',
+        'sort_order',
     ];
 
     /**
-     * Get the products for the category.
-     */
-    public function products()
-    {
-        return $this->hasMany(Product::class);
-    }
-
-    /**
-     * Get active products for the category.
-     */
-    public function activeProducts()
-    {
-        return $this->hasMany(Product::class)->where('status', 'active');
-    }
-
-    /**
-     * Get the category images.
+     * Get the promotion images.
      */
     public function images()
     {
@@ -47,7 +33,7 @@ class Category extends Model
     }
 
     /**
-     * Get the main image for the category.
+     * Get the main image for the promotion.
      */
     public function getMainImageAttribute()
     {
@@ -55,7 +41,7 @@ class Category extends Model
     }
 
     /**
-     * Get the main image URL for the category.
+     * Get the main image URL for the promotion.
      */
     public function getMainImageUrlAttribute()
     {
@@ -63,12 +49,18 @@ class Category extends Model
     }
 
     /**
-     * Scope a query to only include active categories.
+     * Scope a query to only include active promotions.
      */
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
     }
 
-
+    /**
+     * Scope a query to order by sort order.
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('created_at', 'desc');
+    }
 }

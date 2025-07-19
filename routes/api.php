@@ -5,8 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PromotionController;
+use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Admin\SettingsController;
 
 /*
@@ -49,20 +50,29 @@ Route::prefix('auth')->group(function () {
 // Public API Routes
 Route::get('products', [ProductController::class, 'index']);
 Route::get('products/{id}', [ProductController::class, 'show']);
+Route::get('products/{id}/customizations', [ProductController::class, 'customizations']);
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
+
+// Promotion Routes
+Route::apiResource('promotions', PromotionController::class);
+Route::get('promotions/active/list', [PromotionController::class, 'active']);
+
+// Note: User-specific favorites moved to protected routes section
 
 // App Settings
 Route::get('settings/delivery', [SettingsController::class, 'getDeliverySettings']);
 
 // Protected API Routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('cart', CartController::class);
+    // Home API Route (now under auth)
+    Route::get('home', [HomeController::class, 'index']);
 
-    // Order review and calculation routes (must come before resource routes)
-    Route::get('orders/review', [OrderController::class, 'review']);
-    Route::post('orders/review', [OrderController::class, 'review']);
-    Route::post('orders/calculate-total', [OrderController::class, 'calculateTotal']);
+    // User Favorite Products Management (Protected)
+    Route::get('user/favorites', [ProductController::class, 'favorites']);
+    Route::patch('products/favorite/{id}', [ProductController::class, 'toggleFavorite']);
+
+
 
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
     Route::post('orders/cancel/{id}', [OrderController::class, 'cancel']);

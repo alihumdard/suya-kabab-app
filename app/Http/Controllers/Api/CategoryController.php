@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Http\Resources\CategoryResource;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -13,15 +14,15 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = Category::active()
-            ->ordered()
+        $categories = Category::with(['images'])
+            ->active()
+            ->orderBy('name')
             ->withCount('activeProducts')
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' =>  $categories
-            
+            'data' => CategoryResource::collection($categories)
         ]);
     }
 
@@ -30,9 +31,12 @@ class CategoryController extends Controller
      */
     public function show($id)
     {
-        $category = Category::with(['activeProducts' => function ($query) {
+        $category = Category::with([
+            'images',
+            'activeProducts' => function ($query) {
             $query->with('images')->limit(10);
-        }])
+            }
+        ])
             ->active()
             ->find($id);
 
@@ -45,7 +49,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $category
+            'data' => new CategoryResource($category)
         ]);
     }
-} 
+}

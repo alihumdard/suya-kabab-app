@@ -17,7 +17,6 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
     }

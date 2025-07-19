@@ -2,7 +2,8 @@
 @include('includes.script')
 
 <!-- Wrapper -->
-<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false }">
+<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false }"
+    x-init="@if($errors->any()) showModal = true @endif">
     @include('includes.sidebar')
 
     <!-- Page Content -->
@@ -47,31 +48,120 @@
                         <div class="text-sm font-medium text-gray-800">Samantha</div>
                         <div class="text-xs text-gray-500">Admin</div>
                     </div>
-                    <img src="https://randomuser.me/api/portraits/women/44.jpg"
-                        class="w-10 h-10 rounded-full border border-gray-300" />
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Profile"
+                        class="w-8 h-8 rounded-full">
                 </div>
             </div>
+
+            <!-- Additional JavaScript for Form Enhancement -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Auto-focus first error field when modal opens with errors
+                    @if($errors->any())
+                        setTimeout(function () {
+                            const firstError = document.querySelector('.border-red-500');
+                            if (firstError) {
+                                firstError.focus();
+                                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 500);
+                    @endif
+
+        // Auto-generate slug from product name
+        const nameInput = document.querySelector('input[name="name"]');
+                    const slugInput = document.querySelector('input[name="slug"]');
+
+                    if (nameInput && slugInput) {
+                        nameInput.addEventListener('input', function () {
+                            if (!slugInput.value || slugInput.dataset.userModified !== 'true') {
+                                const slug = this.value.toLowerCase()
+                                    .replace(/[^a-z0-9 -]/g, '') // Remove invalid characters
+                                    .replace(/\s+/g, '-') // Replace spaces with dashes
+                                    .replace(/-+/g, '-') // Replace multiple dashes with single dash
+                                    .trim('-'); // Remove leading/trailing dashes
+                                slugInput.value = slug;
+                            }
+                        });
+
+                        // Mark slug as user-modified if user types in it
+                        slugInput.addEventListener('input', function () {
+                            this.dataset.userModified = 'true';
+                        });
+                    }
+
+                    // File input validation preview
+                    const fileInput = document.querySelector('input[name="image"]');
+                    if (fileInput) {
+                        fileInput.addEventListener('change', function () {
+                            const file = this.files[0];
+                            if (file) {
+                                // Validate file size
+                                if (file.size > 2 * 1024 * 1024) { // 2MB
+                                    alert('File size must be less than 2MB');
+                                    this.value = '';
+                                    return;
+                                }
+
+                                // Validate file type
+                                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                                if (!allowedTypes.includes(file.type)) {
+                                    alert('Please select a valid image file (JPEG, PNG, or GIF)');
+                                    this.value = '';
+                                    return;
+                                }
+
+                                console.log('Valid image selected:', file.name);
+                            }
+                        });
+                    }
+
+                    // Form submission loading state
+                    const form = document.querySelector('form[action*="product.store"]');
+                    if (form) {
+                        form.addEventListener('submit', function () {
+                            const submitButton = this.querySelector('button[type="submit"]');
+                            if (submitButton) {
+                                submitButton.disabled = true;
+                                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+                            }
+                        });
+                    }
+
+                    // Add validation feedback on blur
+                    const inputs = document.querySelectorAll('input[required], select[required]');
+                    inputs.forEach(input => {
+                        input.addEventListener('blur', function () {
+                            if (this.value.trim() === '') {
+                                this.classList.add('border-red-300');
+                            } else {
+                                this.classList.remove('border-red-300', 'border-red-500');
+                                this.classList.add('border-green-300');
+                            }
+                        });
+
+                        input.addEventListener('input', function () {
+                            this.classList.remove('border-red-300', 'border-red-500');
+                        });
+                    });
+                });
+            </script>
+
         </div>
 
-        <!-- Success/Error Messages -->
+        <!-- Success Message -->
         @if(session('success'))
-            <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded relative"
-                x-data="{ show: true }" x-show="show">
-                <button @click="show = false" class="absolute top-2 right-2 text-green-700 hover:text-green-900">
-                    <i class="fas fa-times"></i>
-                </button>
-                {{ session('success') }}
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6" role="alert">
+                <strong class="font-bold">Success!</strong>
+                <span class="block sm:inline">{{ session('success') }}</span>
             </div>
         @endif
 
+        <!-- Error Summary (Global errors) -->
         @if($errors->any())
-            <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded relative" x-data="{ show: true }"
-                x-show="show">
-                <button @click="show = false" class="absolute top-2 right-2 text-red-700 hover:text-red-900">
-                    <i class="fas fa-times"></i>
-                </button>
-                <ul>
-                    @foreach ($errors->all() as $error)
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+                <strong class="font-bold">Please fix the following errors:</strong>
+                <ul class="list-disc list-inside mt-2">
+                    @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -136,7 +226,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @forelse($products as $product)
                 <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                    <img src="{{ $product->main_image ? asset('storage/' . $product->main_image) : asset('assets/images/kabab.png') }}"
+                    <img src="{{ $product->images->first()?->url ?: asset('assets/images/kabab.png') }}"
                         alt="{{ $product->name }}" class="w-full h-36 object-cover" />
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 text-base truncate">{{ $product->name }}</h3>
@@ -177,77 +267,107 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Left Form -->
                         <div class="md:col-span-2 space-y-4">
+                            <!-- Category -->
                             <div>
-                                <label class="block text-sm font-medium">Category</label>
-                                <select name="category_id" class="w-full mt-1 px-4 py-2 border rounded-md" required>
+                                <label class="block text-sm font-medium">Category *</label>
+                                <select name="category_id"
+                                    class="w-full mt-1 px-4 py-2 border rounded-md @error('category_id') border-red-500 @enderror"
+                                    required>
                                     <option value="">Select Category</option>
                                     @foreach($categories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                                     @endforeach
                                 </select>
+                                @error('category_id')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
+                            <!-- Product Name -->
                             <div>
-                                <label class="block text-sm font-medium">Product Name</label>
-                                <input type="text" name="name" placeholder="Special Kebab"
-                                    class="w-full mt-1 px-4 py-2 border rounded-md" required />
+                                <label class="block text-sm font-medium">Product Name *</label>
+                                <input type="text" name="name" placeholder="Special Kebab" value="{{ old('name') }}"
+                                    class="w-full mt-1 px-4 py-2 border rounded-md @error('name') border-red-500 @enderror"
+                                    required />
+                                @error('name')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
+                            <!-- Slug -->
                             <div>
                                 <label class="block text-sm font-medium">Slug</label>
-                                <input type="text" name="slug" placeholder="special-kebab"
-                                    class="w-full mt-1 px-4 py-2 border rounded-md" />
+                                <input type="text" name="slug" placeholder="special-kebab" value="{{ old('slug') }}"
+                                    class="w-full mt-1 px-4 py-2 border rounded-md @error('slug') border-red-500 @enderror" />
+                                @error('slug')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                <p class="text-gray-500 text-xs mt-1">Leave empty to auto-generate from product name</p>
                             </div>
 
+                            <!-- Description -->
                             <div>
                                 <label class="block text-sm font-medium">Description</label>
-                                <textarea name="description" placeholder="Detailed description"
-                                    class="w-full mt-1 px-4 py-2 border rounded-md"></textarea>
+                                <textarea name="description" placeholder="Detailed description" rows="3"
+                                    class="w-full mt-1 px-4 py-2 border rounded-md @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                                @error('description')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
+                            <!-- Short Description -->
                             <div>
                                 <label class="block text-sm font-medium">Short Description</label>
                                 <input type="text" name="short_description" placeholder="Brief description"
-                                    class="w-full mt-1 px-4 py-2 border rounded-md" />
+                                    value="{{ old('short_description') }}"
+                                    class="w-full mt-1 px-4 py-2 border rounded-md @error('short_description') border-red-500 @enderror" />
+                                @error('short_description')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
+                            <!-- Price and Status -->
                             <div class="flex gap-4">
                                 <div class="w-1/2">
-                                    <label class="block text-sm font-medium">Price ($)</label>
+                                    <label class="block text-sm font-medium">Price ($) *</label>
                                     <input type="number" name="price" step="0.01" placeholder="19.90"
-                                        class="w-full mt-1 px-4 py-2 border rounded-md" required />
+                                        value="{{ old('price') }}"
+                                        class="w-full mt-1 px-4 py-2 border rounded-md @error('price') border-red-500 @enderror"
+                                        required />
+                                    @error('price')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
                                 <div class="w-1/2">
-                                    <label class="block text-sm font-medium">Cost Price ($)</label>
-                                    <input type="number" name="cost_price" step="0.01" placeholder="12.90"
-                                        class="w-full mt-1 px-4 py-2 border rounded-md" />
-                                </div>
-                            </div>
-
-                            <div class="flex gap-4">
-                                <div class="w-1/2">
-                                    <label class="block text-sm font-medium">SKU</label>
-                                    <input type="text" name="sku" placeholder="KB-001"
-                                        class="w-full mt-1 px-4 py-2 border rounded-md" />
-                                </div>
-                                <div class="w-1/2">
-                                    <label class="block text-sm font-medium">Status</label>
-                                    <select name="status" class="w-full mt-1 px-4 py-2 border rounded-md" required>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
+                                    <label class="block text-sm font-medium">Status *</label>
+                                    <select name="status"
+                                        class="w-full mt-1 px-4 py-2 border rounded-md @error('status') border-red-500 @enderror"
+                                        required>
+                                        <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active
+                                        </option>
+                                        <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>
+                                            Inactive</option>
                                     </select>
+                                    @error('status')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
+                            <!-- Quantity and Track Quantity -->
                             <div class="flex gap-4">
                                 <div class="w-1/2">
                                     <label class="block text-sm font-medium">Quantity</label>
                                     <input type="number" name="quantity" placeholder="100"
-                                        class="w-full mt-1 px-4 py-2 border rounded-md" />
+                                        value="{{ old('quantity', 0) }}"
+                                        class="w-full mt-1 px-4 py-2 border rounded-md @error('quantity') border-red-500 @enderror" />
+                                    @error('quantity')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
                                 <div class="w-1/2 flex items-center pt-6">
                                     <label class="flex items-center">
-                                        <input type="checkbox" name="track_quantity" class="mr-2">
+                                        <input type="checkbox" name="track_quantity" class="mr-2" {{ old('track_quantity') ? 'checked' : '' }}>
                                         <span class="text-sm font-medium">Track Quantity</span>
                                     </label>
                                 </div>
@@ -280,21 +400,39 @@
                         <div class="flex flex-col justify-start">
                             <label class="block text-sm font-medium mb-2">Dish Image</label>
                             <div
-                                class="flex items-center justify-center h-full border-2 border-dashed border-red-300 bg-red-50 rounded-lg p-6 text-center">
+                                class="flex items-center justify-center h-64 border-2 border-dashed border-red-300 bg-red-50 rounded-lg p-6 text-center @error('image') border-red-500 bg-red-100 @enderror">
                                 <div>
                                     <i class="fas fa-upload text-red-500 text-3xl mb-2"></i>
                                     <p class="text-sm text-gray-500">Upload kebab image</p>
-                                    <p class="text-xs text-gray-400">JPG, PNG up to 2MB</p>
-                                    <input type="file" name="image" accept="image/*" class="mt-2" />
+                                    <p class="text-xs text-gray-400">JPG, PNG, GIF up to 2MB</p>
+                                    <p class="text-xs text-gray-400">Recommended: 800x600 pixels</p>
+                                    <input type="file" name="image" accept="image/jpeg,image/png,image/jpg,image/gif"
+                                        class="mt-3 text-xs @error('image') text-red-600 @enderror" />
                                 </div>
+                            </div>
+                            @error('image')
+                                <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
+                            @enderror
+                            <div class="mt-2 text-xs text-gray-500">
+                                <p><strong>Image Requirements:</strong></p>
+                                <ul class="list-disc list-inside mt-1">
+                                    <li>Formats: JPEG, PNG, JPG, GIF</li>
+                                    <li>Maximum size: 2MB</li>
+                                    <li>Recommended: 800x600 pixels</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Save Button -->
-                    <div class="mt-6 text-right">
+                    <!-- Form Actions -->
+                    <div class="mt-6 flex justify-between">
+                        <button type="button" @click="showModal = false"
+                            class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600">Cancel</button>
                         <button type="submit"
-                            class="bg-[#E73C36] text-white px-6 py-2 rounded-md hover:bg-red-600">Save</button>
+                            class="bg-[#E73C36] text-white px-6 py-2 rounded-md hover:bg-red-600 flex items-center">
+                            <i class="fas fa-save mr-2"></i>
+                            Save Product
+                        </button>
                     </div>
                 </form>
             </div>

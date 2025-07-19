@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
+use App\Models\Image;
 use App\Models\OtpVerification;
-use Illuminate\Http\JsonResponse;
+use App\Http\Requests\UserRegisterRequest;
+use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Resources\UserResource;
+use App\Helpers\ImageHelper;
+use App\Notifications\UserOtpVerification;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -18,33 +24,23 @@ class AuthController extends Controller
     /**
      * Register a new user.
      */
-    public function register(Request $request)
+    public function register(UserRegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'string', 'min:8'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $input = $request->validated();
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $input['name'],
+            'email' => $input['email'],
+            'password' => Hash::make($input['password']),
+            'phone' => $input['phone'],
+            'address' => $input['address'],
         ]);
 
         // Send OTP for email verification
         sendOTP($user->email, 'email_verification');
 
         return response()->json([
-            'success' => true,
+            'error' => false,
             'message' => 'Registration successful. Please verify your email with the OTP sent to your email address.',
             'data' => $user
         ], 201);
@@ -103,7 +99,7 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token
             ]
-        ]);
+        ], 200);
     }
 
     /**
@@ -201,8 +197,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'error' => true,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -236,8 +231,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'error' => true,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -290,15 +284,37 @@ class AuthController extends Controller
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
-            // Delete old profile image if it exists
-            $oldProfileImage = $user->getRawOriginal('profile_image');
-            if ($oldProfileImage && Storage::disk('public')->exists($oldProfileImage)) {
-                Storage::disk('public')->delete($oldProfileImage);
-            }
+            try {
+                // Delete old profile images
+                $user->images()->delete();
 
-            // Store new profile image
-            $profileImagePath = $request->file('profile_image')->store('images', 'public');
-            $validatedData['profile_image'] = $profileImagePath;
+                // Use ImageHelper to save image to public/images/profiles/
+                $imagePath = ImageHelper::saveImage($request->file('profile_image'), 'images/profiles');
+
+                // Create polymorphic image record
+                Image::create([
+                    'imageable_type' => User::class,
+                    'imageable_id' => $user->id,
+                    'image_path' => $imagePath,
+                    'alt_text' => $user->name . ' profile picture',
+                    'mime_type' => $request->file('profile_image')->getMimeType(),
+                    'size' => $request->file('profile_image')->getSize(),
+                    'dimensions' => json_encode([
+                        'width' => null, // You can add image dimensions detection here if needed
+                        'height' => null
+                    ]),
+                    'is_active' => true,
+                ]);
+
+                // Remove profile_image from validated data since we handle it separately
+                unset($validatedData['profile_image']);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Failed to upload profile image. Please try again.'
+                ], 500);
+            }
         }
 
         $user->update($validatedData);
@@ -306,7 +322,7 @@ class AuthController extends Controller
         return response()->json([
             'error' => false,
             'message' => 'Profile updated successfully',
-            'data' => $user->fresh()
+            'data' => new UserResource($user->fresh()->load('images'))
         ]);
     }
 

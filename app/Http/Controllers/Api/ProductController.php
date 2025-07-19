@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use Auth;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -13,8 +15,17 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'images'])
+        $query = Product::with(['category', 'images', 'addons'])
             ->active();
+
+        // Eager load favorites relationship for authenticated users
+        if (auth()->check()) {
+            $query->with([
+                'favoritedBy' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }
+            ]);
+        }
 
         // Filter by category
         if ($request->has('category_id')) {
@@ -24,6 +35,15 @@ class ProductController extends Controller
         // Filter by featured
         if ($request->has('featured')) {
             $query->where('featured', $request->boolean('featured'));
+        }
+
+        // Filter by user's favorites (requires authentication)
+        if ($request->has('favorites') && $request->boolean('favorites')) {
+            $user = $request->user();
+            if ($user) {
+                $favoriteProductIds = $user->favorites()->pluck('product_id');
+                $query->whereIn('id', $favoriteProductIds);
+            }
         }
 
         // Search
@@ -56,19 +76,20 @@ class ProductController extends Controller
 
         $perPage = $request->get('per_page', 15);
         $products = $query->paginate($perPage);
+        $pagination = [
+            'current_page' => $products->currentPage(),
+            'last_page' => $products->lastPage(),
+            'per_page' => $products->perPage(),
+            'total' => $products->total(),
+            'from' => $products->firstItem(),
+            'to' => $products->lastItem(),
+        ];
 
         return response()->json([
             'success' => true,
             'data' => [
-                'products' => $products->items(),
-                'pagination' => [
-                    'current_page' => $products->currentPage(),
-                    'last_page' => $products->lastPage(),
-                    'per_page' => $products->perPage(),
-                    'total' => $products->total(),
-                    'from' => $products->firstItem(),
-                    'to' => $products->lastItem(),
-                ]
+                'products' => ProductResource::collection($products->items()),
+                'pagination' => $pagination
             ]
         ]);
     }
@@ -76,24 +97,154 @@ class ProductController extends Controller
     /**
      * Display the specified product.
      */
-    public function show($id)
+    public function show(string $id)
     {
-        $product = Product::with(['category', 'images', 'approvedReviews.user'])
-            ->active()
-            ->find($id);
+        $query = Product::with(['category', 'images', 'addons']);
+
+        // Eager load favorites relationship for authenticated users
+        if (auth()->check()) {
+            $query->with([
+                'favoritedBy' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }
+            ]);
+        }
+
+        $product = $query->active()->find($id);
 
         if (!$product) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product not found'
+                'message' => 'Product not found or inactive'
             ], 404);
         }
 
         return response()->json([
             'success' => true,
+            'data' => new ProductResource($product)
+        ]);
+    }
+
+    /**
+     * Get product customization options (addons).
+     */
+    public function customizations(string $id)
+    {
+        $product = Product::with([
+            'addons' => function ($query) {
+                $query->where('status', 'active')->orderBy('sort_order');
+            }
+        ])->active()->find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found or inactive'
+            ], 404);
+        }
+
+        if ($product->addons->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'addons' => [],
+                    'has_customization' => false,
+                    'message' => 'No customization options available for this product'
+                ]
+            ]);
+        }
+
+        // Format addons for customization
+        $addons = $product->addons->map(function ($addon) {
+            return [
+                'id' => $addon->id,
+                'name' => $addon->name,
+                'slug' => $addon->slug,
+                'description' => $addon->description,
+                'price' => $addon->price,
+                'image' => $addon->image,
+                'sku' => $addon->sku,
+                'is_required' => $addon->pivot->is_required,
+                'min_quantity' => $addon->pivot->min_quantity,
+                'max_quantity' => $addon->pivot->max_quantity,
+                'sort_order' => $addon->pivot->sort_order,
+                'in_stock' => $addon->isInStock(),
+                'track_quantity' => $addon->track_quantity,
+                'available_quantity' => $addon->track_quantity ? $addon->quantity : null
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
             'data' => [
-                'product' => $product
+                'addons' => $addons,
+                'has_customization' => $addons->isNotEmpty()
             ]
+        ]);
+    }
+
+    /**
+     * Get authenticated user's favorite products.
+     */
+    public function favorites(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        $products = $user->favorites()
+            ->with([
+                'category',
+                'images',
+                'favoritedBy' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }
+            ])
+            ->where('status', 'active')
+            ->latest('user_favorites.created_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => ProductResource::collection($products)
+        ]);
+    }
+
+
+
+    /**
+     * Toggle product favorite status for user.
+     */
+    public function toggleFavorite(Request $request, $id)
+    {
+        $user = Auth::user();
+        $product = Product::findOrFail($id);
+
+        $isFavorite = $user->favorites()->where('product_id', $id)->exists();
+
+        if ($isFavorite) {
+            $user->favorites()->detach($id);
+            $message = 'Product removed from favorites successfully';
+        } else {
+            $user->favorites()->attach($id);
+            $message = 'Product added to favorites successfully';
+        }
+
+        // Refresh the product with relationships to get updated is_favorite status
+        $product = $product->fresh([
+            'favoritedBy' => function ($q) {
+                $q->where('user_id', auth()->id());
+            }
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => new ProductResource($product)
         ]);
     }
 }
