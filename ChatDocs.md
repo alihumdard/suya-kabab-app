@@ -1080,4 +1080,249 @@ Log::channel('chat')->info('Message sent', [
 ]);
 ```
 
+# Product Customization API Flow Documentation
+
+## Complete Customer Journey for Product Customization
+
+### 1. **Browse Products** 
+**Endpoint:** `GET /api/products`
+- Customer sees list of all available products
+- Each product shows basic info (name, price, image, category)
+- Customer can filter by category, search, or sort
+
+### 2. **View Product Details with Customization Options**
+**Endpoint:** `GET /api/products/{id}`
+- Shows complete product information
+- **NEW**: Now includes `customization_options` grouped by categories
+- **NEW**: Shows `has_customization` flag to indicate if product can be customized
+
+**Enhanced Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "product": {
+      "id": 1,
+      "name": "Special Suya Kabab",
+      "price": 15.99,
+      "description": "Delicious grilled kabab with special spices",
+      "images": [...]
+    },
+    "customization_options": [
+      {
+        "category_name": "Toppings",
+        "category_id": 1,
+        "category_icon": "toppings-icon.png",
+        "addons": [
+          {
+            "id": 1,
+            "name": "Extra Onions",
+            "description": "Fresh sliced onions",
+            "price": 1.50,
+            "image": "onions.jpg",
+            "is_required": false,
+            "min_quantity": 0,
+            "max_quantity": 3,
+            "in_stock": true,
+            "available_quantity": 100
+          },
+          {
+            "id": 2,
+            "name": "Spicy Sauce",
+            "description": "Our signature spicy sauce",
+            "price": 2.00,
+            "image": "sauce.jpg",
+            "is_required": true,
+            "min_quantity": 1,
+            "max_quantity": 2,
+            "in_stock": true,
+            "available_quantity": null
+          }
+        ]
+      },
+      {
+        "category_name": "Fries Section",
+        "category_id": 2,
+        "category_icon": "fries-icon.png",
+        "addons": [
+          {
+            "id": 3,
+            "name": "Regular Fries",
+            "price": 3.99,
+            "is_required": false,
+            "min_quantity": 0,
+            "max_quantity": 2
+          },
+          {
+            "id": 4,
+            "name": "Cheese Fries",
+            "price": 5.99,
+            "is_required": false,
+            "min_quantity": 0,
+            "max_quantity": 1
+          }
+        ]
+      },
+      {
+        "category_name": "Soft Drinks",
+        "category_id": 3,
+        "category_icon": "drinks-icon.png",
+        "addons": [
+          {
+            "id": 5,
+            "name": "Coca Cola",
+            "price": 2.50,
+            "is_required": false,
+            "min_quantity": 0,
+            "max_quantity": 3
+          }
+        ]
+      }
+    ],
+    "has_customization": true,
+    "average_rating": 4.5,
+    "total_reviews": 124,
+    "in_stock": true
+  }
+}
+```
+
+### 3. **Get Detailed Customization Options** (Optional)
+**Endpoint:** `GET /api/products/{id}/customizations`
+- **NEW**: Dedicated endpoint for getting only customization options
+- Useful for modal/popup display of customization choices
+- More detailed information about each add-on category
+
+### 4. **Add Customized Product to Cart**
+**Endpoint:** `POST /api/cart`
+- Customer selects main product + desired add-ons
+- System validates add-on requirements and quantity limits
+- Calculates total price (base product + selected add-ons)
+
+**Request Example:**
+```json
+{
+  "product_id": 1,
+  "quantity": 2,
+  "customizations": [
+    {
+      "id": 1,
+      "quantity": 2
+    },
+    {
+      "id": 2,
+      "quantity": 1
+    },
+    {
+      "id": 3,
+      "quantity": 1
+    }
+  ],
+  "special_instructions": "Extra spicy please"
+}
+```
+
+### 5. **View Cart with Customizations**
+**Endpoint:** `GET /api/cart`
+- Shows all cart items with their customizations
+- Displays addon costs separately
+- Shows total price breakdown
+
+### 6. **Complete Order**
+**Endpoint:** `POST /api/orders`
+- Customer proceeds to checkout
+- System creates order with all customizations
+- Customizations are saved in order items for fulfillment
+
+---
+
+## Key Features of the Customization System
+
+### **🎯 Smart Categorization**
+- Add-ons are grouped by categories (Toppings, Fries, Drinks)
+- Each category has its own icon and description
+- Categories are sorted by display order
+
+### **🛡️ Validation Rules**
+- **Required Add-ons**: Some add-ons must be selected (e.g., sauce choice)
+- **Quantity Limits**: Each add-on has min/max quantity constraints
+- **Stock Management**: Real-time inventory tracking for add-ons
+
+### **💰 Dynamic Pricing**
+- Add-on prices are clearly displayed
+- Total price calculated automatically
+- Addon costs shown separately in cart
+
+### **🎨 Rich UI Support**
+- Category icons for better visual presentation
+- Add-on images for better selection experience
+- Detailed descriptions for each customization option
+
+### **📱 Mobile-Friendly**
+- Optimized data structure for mobile apps
+- Minimal API calls needed
+- Efficient data loading
+
+---
+
+## Business Logic Implementation
+
+### **Add-on Requirements**
+```php
+// Example validation in backend
+if ($addon->pivot->is_required && $selectedQuantity < $addon->pivot->min_quantity) {
+    throw new Exception("This add-on is required");
+}
+
+if ($selectedQuantity > $addon->pivot->max_quantity) {
+    throw new Exception("Maximum quantity exceeded");
+}
+```
+
+### **Price Calculation**
+```php
+// Total calculation
+$basePrice = $product->price * $quantity;
+$addonTotal = 0;
+
+foreach ($customizations as $customization) {
+    $addon = ProductAddon::find($customization['id']);
+    $addonTotal += $addon->price * $customization['quantity'];
+}
+
+$total = $basePrice + $addonTotal;
+```
+
+### **Stock Management**
+```php
+// Inventory check
+if ($addon->track_quantity && $addon->quantity < $requestedQuantity) {
+    throw new Exception("Add-on out of stock");
+}
+```
+
+---
+
+## Example Customer Flow
+
+1. **Customer browses products** → Sees "Special Suya Kabab - $15.99"
+2. **Clicks on product** → API shows product details + customization options
+3. **Customer sees:**
+   - **Toppings**: Extra Onions (+$1.50), Spicy Sauce (+$2.00) *Required*
+   - **Fries**: Regular Fries (+$3.99), Cheese Fries (+$5.99)
+   - **Drinks**: Coca Cola (+$2.50)
+4. **Customer selects:**
+   - 1x Extra Onions = $1.50
+   - 1x Spicy Sauce = $2.00 (required)
+   - 1x Regular Fries = $3.99
+   - 1x Coca Cola = $2.50
+5. **Total calculation:**
+   - Base Product: $15.99
+   - Add-ons: $9.99
+   - **Final Total: $25.98**
+6. **Adds to cart** → Item saved with all customizations
+7. **Proceeds to checkout** → Order created with full customization details
+
+This flow ensures a smooth, intuitive experience for customers while maintaining robust business logic and inventory management.
+
 This comprehensive documentation covers all aspects of implementing a robust chat system for your Suya Kabab application. Follow the phases step by step for a successful implementation! 🚀 

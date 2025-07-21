@@ -2,72 +2,20 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Admin;
-use App\Models\Category;
 use App\Models\Product;
 use App\Models\Image;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
-class AdminSeeder extends Seeder
+class ProductsWithImagesSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        // Create Super Admin
-        Admin::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@suyakabab.com',
-            'password' => Hash::make('password'),
-            'role' => 'super_admin',
-            'status' => 'active',
-            'email_verified_at' => now(),
-        ]);
-
-        // Create Test User
-        User::create([
-            'name' => 'Test User',
-            'email' => 'user@suyakabab.com',
-            'password' => Hash::make('password'),
-            'status' => 'active',
-            'email_verified_at' => now(),
-            'country' => 'Nigeria',
-        ]);
-
-        // Create Categories
-        $categories = [
-            [
-                'name' => 'Suya',
-                'slug' => 'suya',
-                'description' => 'Traditional Nigerian grilled meat with spices',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Kabab',
-                'slug' => 'kabab',
-                'description' => 'Delicious grilled kababs with various meats',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Drinks',
-                'slug' => 'drinks',
-                'description' => 'Refreshing beverages and drinks',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Sides',
-                'slug' => 'sides',
-                'description' => 'Side dishes and accompaniments',
-                'status' => 'active',
-            ],
-        ];
-
-        foreach ($categories as $category) {
-            Category::create($category);
-        }
+        // Clear existing products and images
+        Image::where('imageable_type', Product::class)->delete();
+        Product::query()->delete();
 
         // Create Sample Products with Images
         $products = [
@@ -135,7 +83,7 @@ class AdminSeeder extends Seeder
             $product = Product::create($productData);
 
             // Create images for the product
-            foreach ($images as $index => $imageName) {
+            foreach ($images as $imageName) {
                 Image::create([
                     'imageable_id' => $product->id,
                     'imageable_type' => Product::class,
@@ -145,10 +93,12 @@ class AdminSeeder extends Seeder
                     'is_active' => true,
                 ]);
             }
+
+            $this->command->info("Created product: {$product->name} with " . count($images) . " images");
         }
 
-        $this->command->info('AdminSeeder completed successfully!');
-        $this->command->info('Created: 1 Admin, 1 User, 4 Categories, 4 Products with Images');
+        $this->command->info('ProductsWithImagesSeeder completed successfully!');
+        $this->command->info('Created 8 Products with Images');
     }
 
     /**

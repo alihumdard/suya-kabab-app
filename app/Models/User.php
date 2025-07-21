@@ -24,7 +24,6 @@ class User extends Authenticatable
         'password',
         'phone',
         'gender',
-        'profile_image',
         'date_of_birth',
         'address',
         'city',
@@ -63,15 +62,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's images.
+     */
+    public function images()
+    {
+        return $this->morphMany(Image::class, 'imageable')->active();
+    }
+
+    /**
      * Get the profile image URL.
      */
-    public function getProfileImageAttribute($value)
+    public function getProfileImageAttribute()
     {
-        if (!$value) {
-            return null;
+        // Use loaded relationship if available, otherwise query
+        if ($this->relationLoaded('images')) {
+            return $this->images->first()?->url;
         }
-        
-        return Storage::disk('public')->url($value);
+
+        return $this->images()->first()?->url;
     }
 
     /**
@@ -83,19 +91,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the user's cart items.
-     */
-    public function cart()
-    {
-        return $this->hasMany(Cart::class);
-    }
-
-    /**
      * Get the user's reviews.
      */
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get the user's favorite products.
+     */
+    public function favorites()
+    {
+        return $this->belongsToMany(Product::class, 'user_favorites')->withTimestamps();
     }
 
     /**

@@ -12,12 +12,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AdminSeeder::class,
-            DiscountCodeSeeder::class,
             SettingsSeeder::class,
-            AddonCategorySeeder::class,
+            AdminSeeder::class,  // Create categories and products first
+            PromotionSeeder::class,
             ProductAddonSeeder::class,
-            ProductAddonPivotSeeder::class,
+            ProductAddonPivotSeeder::class,  // Now products exist for pivot seeding
+            DiscountCodeSeeder::class,
+
         ]);
 
         $this->command->info('Database seeded successfully!');
@@ -25,5 +26,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('User Login: user@suyakabab.com / password');
         $this->command->info('Added 5 addon categories and 25 product addons');
         $this->command->info('All products now have available addons for customization');
+        $this->command->info('Added 4 sample promotions with different statuses and dates');
     }
 }

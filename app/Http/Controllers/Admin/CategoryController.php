@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Image;
+use App\Helpers\ImageHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +18,7 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Category::withCount('products');
+        $query = Category::with(['images'])->withCount('products');
 
         // Handle search
         if ($request->has('search') && $request->search) {
@@ -69,16 +71,37 @@ class CategoryController extends Controller
             $counter++;
         }
 
+        // Create category
+        $category = Category::create([
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+            'status' => $request->status,
+
+        ]);
+
         // Handle image upload
-        $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
 
-            // Generate unique filename with original extension
-            $imageName = 'category_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
             try {
-                $imagePath = $image->storeAs('categories', $imageName, 'public');
+                // Use ImageHelper to save image to public/images/categories/
+                $imagePath = ImageHelper::saveImage($image, 'images/categories');
+
+                // Create polymorphic image record
+                Image::create([
+                    'imageable_type' => Category::class,
+                    'imageable_id' => $category->id,
+                    'image_path' => $imagePath,
+                    'alt_text' => $category->name,
+                    'mime_type' => $image->getMimeType(),
+                    'size' => $image->getSize(),
+                    'dimensions' => json_encode([
+                        'width' => null, // You can add image dimensions detection here if needed
+                        'height' => null
+                    ]),
+                    'is_active' => true,
+                ]);
             } catch (\Exception $e) {
                 // Handle upload error gracefully
                 return redirect()->back()
@@ -86,16 +109,6 @@ class CategoryController extends Controller
                     ->with('error', 'Failed to upload image. Please try again.');
             }
         }
-
-        // Create category
-        Category::create([
-            'name' => $request->name,
-            'slug' => $slug,
-            'description' => $request->description,
-            'image' => $imagePath,
-            'status' => $request->status,
-            'sort_order' => $request->sort_order ?? 0,
-        ]);
 
         return redirect()->route('admin.category')
             ->with('success', 'Category created successfully!');

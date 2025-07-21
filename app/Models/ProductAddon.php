@@ -15,7 +15,6 @@ class ProductAddon extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'addon_category_id',
         'name',
         'slug',
         'description',
@@ -39,14 +38,6 @@ class ProductAddon extends Model
             'price' => 'decimal:2',
             'track_quantity' => 'boolean',
         ];
-    }
-
-    /**
-     * Get the addon category that owns this add-on.
-     */
-    public function category()
-    {
-        return $this->belongsTo(AddonCategory::class, 'addon_category_id');
     }
 
     /**

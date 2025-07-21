@@ -28,8 +28,6 @@ class StoreProductRequest extends FormRequest
             'description' => 'nullable|string',
             'short_description' => 'nullable|string|max:500',
             'price' => 'required|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
-            'sku' => 'nullable|string|max:100|unique:products,sku',
             'status' => 'required|in:active,inactive',
             'quantity' => 'nullable|integer|min:0',
             'track_quantity' => 'boolean',
@@ -55,9 +53,6 @@ class StoreProductRequest extends FormRequest
             'price.required' => 'Product price is required.',
             'price.numeric' => 'Product price must be a valid number.',
             'price.min' => 'Product price cannot be negative.',
-            'cost_price.numeric' => 'Cost price must be a valid number.',
-            'cost_price.min' => 'Cost price cannot be negative.',
-            'sku.unique' => 'This SKU is already taken. Please choose a different one.',
             'status.required' => 'Product status is required.',
             'status.in' => 'Product status must be either active or inactive.',
             'quantity.integer' => 'Quantity must be a valid number.',
@@ -78,7 +73,6 @@ class StoreProductRequest extends FormRequest
         return [
             'category_id' => 'category',
             'short_description' => 'short description',
-            'cost_price' => 'cost price',
             'track_quantity' => 'track quantity',
             'item_tags' => 'item tags',
         ];

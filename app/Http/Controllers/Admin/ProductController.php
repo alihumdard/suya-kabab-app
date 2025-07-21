@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
-use App\Models\ProductImage;
+use App\Models\Image;
+use App\Helpers\ImageHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +28,6 @@ class ProductController extends Controller
                 $q->where('name', 'like', '%' . $searchTerm . '%')
                     ->orWhere('description', 'like', '%' . $searchTerm . '%')
                     ->orWhere('short_description', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('sku', 'like', '%' . $searchTerm . '%')
                     ->orWhereHas('category', function ($categoryQuery) use ($searchTerm) {
                         $categoryQuery->where('name', 'like', '%' . $searchTerm . '%');
                     });
@@ -58,7 +58,7 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(12)->appends(request()->query());
-        $categories = Category::active()->ordered()->get();
+        $categories = Category::active()->orderBy('name')->get();
 
         return view('pages.admin.product', compact('products', 'categories'));
     }
@@ -87,8 +87,6 @@ class ProductController extends Controller
             'description' => $request->description,
             'short_description' => $request->short_description,
             'price' => $request->price,
-            'cost_price' => $request->cost_price,
-            'sku' => $request->sku,
             'status' => $request->status,
             'quantity' => $request->quantity ?? 0,
             'track_quantity' => $request->has('track_quantity'),
@@ -98,18 +96,23 @@ class ProductController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
 
-            // Generate unique filename with original extension
-            $imageName = 'product_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
             try {
-                $imagePath = $image->storeAs('products', $imageName, 'public');
+                // Use ImageHelper to save image to public/images/products/
+                $imagePath = ImageHelper::saveImage($image, 'images/products');
 
-                // Create product image record
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image' => $imagePath,
+                // Create polymorphic image record
+                Image::create([
+                    'imageable_type' => Product::class,
+                    'imageable_id' => $product->id,
+                    'image_path' => $imagePath,
                     'alt_text' => $product->name,
-                    'sort_order' => 1,
+                    'mime_type' => $image->getMimeType(),
+                    'size' => $image->getSize(),
+                    'dimensions' => json_encode([
+                        'width' => null, // You can add image dimensions detection here if needed
+                        'height' => null
+                    ]),
+                    'is_active' => true,
                 ]);
             } catch (\Exception $e) {
                 // Handle upload error gracefully

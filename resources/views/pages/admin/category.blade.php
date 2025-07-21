@@ -134,7 +134,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @forelse($categories as $category)
                 <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                    <img src="{{ $category->image ? asset('storage/' . $category->image) : asset('assets/images/kabab.png') }}"
+                    <img src="{{ $category->images->first()?->url ?: asset('assets/images/kabab.png') }}"
                         alt="{{ $category->name }}" class="w-full h-36 object-cover" />
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 text-base truncate">{{ $category->name }}</h3>

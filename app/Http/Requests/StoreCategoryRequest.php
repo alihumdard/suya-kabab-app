@@ -26,7 +26,7 @@ class StoreCategoryRequest extends FormRequest
             'slug' => 'nullable|string|max:255|unique:categories,slug',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
-            'sort_order' => 'nullable|integer|min:0',
+
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
@@ -44,8 +44,7 @@ class StoreCategoryRequest extends FormRequest
             'slug.unique' => 'This slug is already taken. Please choose a different one.',
             'status.required' => 'Category status is required.',
             'status.in' => 'Category status must be either active or inactive.',
-            'sort_order.integer' => 'Sort order must be a valid number.',
-            'sort_order.min' => 'Sort order cannot be negative.',
+
             'image.image' => 'The uploaded file must be an image.',
             'image.mimes' => 'Image must be a file of type: jpeg, png, jpg, gif.',
             'image.max' => 'Image size cannot exceed 2MB.',
@@ -60,7 +59,6 @@ class StoreCategoryRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'sort_order' => 'sort order',
         ];
     }
 }
