@@ -32,7 +32,7 @@ class ProductsWithImagesSeeder extends Seeder
                 'quantity' => 30,
                 'status' => 'active',
                 'featured' => true,
-                'images' => ['kabab.png', 'special-kabab-4.png']
+                'images' => ['kabab.png']
             ],
             [
                 'category_id' => 2, // Kabab
@@ -44,7 +44,7 @@ class ProductsWithImagesSeeder extends Seeder
 
                 'quantity' => 35,
                 'status' => 'active',
-                'images' => ['2.png', 'chef.png']
+                'images' => ['special-kabab-1.png']
             ],
             [
                 'category_id' => 3, // Drinks
@@ -94,11 +94,11 @@ class ProductsWithImagesSeeder extends Seeder
                 ]);
             }
 
-            $this->command->info("Created product: {$product->name} with " . count($images) . " images");
+            $this->command->info("Created product: {$product->name} with " . count($images) . " image");
         }
 
         $this->command->info('ProductsWithImagesSeeder completed successfully!');
-        $this->command->info('Created 8 Products with Images');
+        $this->command->info('Created 4 Products, each with 1 Image');
     }
 
     /**

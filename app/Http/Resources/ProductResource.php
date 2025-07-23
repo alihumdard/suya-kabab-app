@@ -24,6 +24,12 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'track_quantity' => $this->track_quantity,
             'quantity' => $this->quantity,
+            'main_image_url' => $this->when(
+                $this->relationLoaded('images') && $this->images->isNotEmpty(),
+                function () {
+                    return $this->images->first()->url;
+                }
+            ),
             'allow_backorder' => $this->allow_backorder,
             'weight' => $this->weight,
             'status' => $this->status,
@@ -33,7 +39,6 @@ class ProductResource extends JsonResource
 
             // Relationships
             'category' => $this->whenLoaded('category'),
-            'images' => ImageResource::collection($this->whenLoaded('images')),
             'addons' => $this->when(
                 $this->relationLoaded('addons'),
                 function () {

@@ -21,12 +21,16 @@ class PromotionResource extends JsonResource
             'status' => $this->status,
             //'button_text' => $this->button_text,
             //'button_url' => $this->button_url,
-           // 'sort_order' => $this->sort_order,
+            // 'sort_order' => $this->sort_order,
+            'main_image_url' => $this->when(
+                $this->relationLoaded('images') && $this->images->isNotEmpty(),
+                function () {
+                    return $this->images->first()->url;
+                }
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
 
-            // Relationships
-            'images' => ImageResource::collection($this->whenLoaded('images')),
 
             // Computed attributes
             'is_active' => $this->status === 'active',

@@ -47,9 +47,25 @@ Route::prefix('admin')->group(function () {
             return view('pages.admin.menu');
         })->name('admin.menu');
 
-        Route::get('product', [ProductController::class, 'index'])->name('admin.product');
-        Route::post('product', [ProductController::class, 'store'])->name('admin.product.store');
+        // Product Management Routes
+        Route::prefix('products')->name('admin.products.')->group(function () {
+            Route::get('/', [ProductController::class, 'index'])->name('index');
+            Route::post('/', [ProductController::class, 'store'])->name('store');
+            Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+        });
 
+        // Category Management Routes
+        Route::prefix('categories')->name('admin.categories.')->group(function () {
+            Route::get('/', [CategoryController::class, 'index'])->name('index');
+            Route::post('/', [CategoryController::class, 'store'])->name('store');
+            Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+            Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Backward compatibility route
         Route::get('category', [CategoryController::class, 'index'])->name('admin.category');
         Route::post('category', [CategoryController::class, 'store'])->name('admin.category.store');
 
@@ -65,6 +81,10 @@ Route::prefix('admin')->group(function () {
         Route::get('card', function () {
             return view('pages.admin.components.card');
         })->name('admin.card');
+
+        Route::get('delete-modal', function () {
+            return view('pages.admin.components.delete-modal-demo');
+        })->name('admin.delete-modal');
 
         // Settings Management Routes
         Route::prefix('settings')->group(function () {

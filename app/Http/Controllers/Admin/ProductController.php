@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 
 class ProductController extends Controller
 {
@@ -60,7 +61,7 @@ class ProductController extends Controller
         $products = $query->paginate(12)->appends(request()->query());
         $categories = Category::active()->orderBy('name')->get();
 
-        return view('pages.admin.product', compact('products', 'categories'));
+        return view('pages.admin.products.index', compact('products', 'categories'));
     }
 
     /**
@@ -122,7 +123,123 @@ class ProductController extends Controller
             }
         }
 
-        return redirect()->route('admin.product')
+        return redirect()->route('admin.products.index')
             ->with('success', 'Product created successfully!');
+    }
+
+    /**
+     * Show the edit form for a product.
+     */
+    public function edit(Product $product)
+    {
+        $categories = Category::active()->orderBy('name')->get();
+
+        return view('pages.admin.products.edit', compact('product', 'categories'));
+    }
+
+    /**
+     * Update the specified product.
+     */
+    public function update(UpdateProductRequest $request, Product $product)
+    {
+        // Generate slug if not provided
+        $slug = $request->slug ?: Str::slug($request->name);
+        $originalSlug = $slug;
+        $counter = 1;
+
+        // Check for unique slug (excluding current product)
+        while (Product::where('slug', $slug)->where('id', '!=', $product->id)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Update product
+        $product->update([
+            'category_id' => $request->category_id,
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+            'short_description' => $request->short_description,
+            'price' => $request->price,
+            'status' => $request->status,
+            'quantity' => $request->quantity ?? 0,
+            'track_quantity' => $request->has('track_quantity'),
+            'weight' => $request->weight,
+            'featured' => $request->has('featured'),
+        ]);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+
+            try {
+                // Delete old image if exists
+                $oldImage = $product->images()->first();
+                if ($oldImage) {
+                    // Delete physical file if it exists
+                    $oldImagePath = public_path($oldImage->image_path);
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                    $oldImage->delete();
+                }
+
+                // Use ImageHelper to save new image to public/images/products/
+                $imagePath = ImageHelper::saveImage($image, 'images/products');
+
+                // Create new polymorphic image record
+                Image::create([
+                    'imageable_type' => Product::class,
+                    'imageable_id' => $product->id,
+                    'image_path' => $imagePath,
+                    'alt_text' => $product->name,
+                    'mime_type' => $image->getMimeType(),
+                    'size' => $image->getSize(),
+                    'dimensions' => json_encode([
+                        'width' => null, // You can add image dimensions detection here if needed
+                        'height' => null
+                    ]),
+                    'is_active' => true,
+                ]);
+            } catch (\Exception $e) {
+                // Handle upload error gracefully
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Failed to upload image. Please try again.');
+            }
+        }
+
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product updated successfully!');
+    }
+
+    /**
+     * Remove the specified product from storage.
+     */
+    public function destroy(Product $product)
+    {
+        try {
+            // Delete associated images
+            $images = $product->images;
+            foreach ($images as $image) {
+                // Delete physical file if it exists
+                $imagePath = public_path($image->image_path);
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+                $image->delete();
+            }
+
+            // Delete the product
+            $productName = $product->name;
+            $product->delete();
+
+            return redirect()->route('admin.products.index')
+                ->with('success', "Product '{$productName}' deleted successfully!");
+
+        } catch (\Exception $e) {
+            return redirect()->route('admin.products.index')
+                ->with('error', 'Failed to delete product. Please try again.');
+        }
     }
 }

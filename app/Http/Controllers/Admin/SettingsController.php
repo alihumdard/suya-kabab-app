@@ -53,7 +53,7 @@ class SettingsController extends Controller
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         try {
@@ -95,7 +95,7 @@ class SettingsController extends Controller
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         try {
@@ -159,7 +159,7 @@ class SettingsController extends Controller
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         try {

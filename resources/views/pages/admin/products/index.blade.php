@@ -170,37 +170,47 @@
 
         <!-- Search & Add -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-            <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                <form action="{{ route('admin.product') }}" method="GET"
-                    class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                    <div class="flex items-center border rounded-md px-3 py-2 w-full sm:w-72 bg-white">
+            <div class="flex items-center gap-3 w-full lg:w-auto">
+                <!-- Search Form -->
+                <form action="{{ route('admin.products.index') }}" method="GET" class="flex items-center gap-3">
+                    <!-- Search Input -->
+                    <div class="flex items-center border rounded-md px-3 bg-white h-10 w-full sm:w-72">
                         <i class="fas fa-search text-gray-400 mr-2"></i>
                         <input type="text" name="search" value="{{ request('search') }}"
                             placeholder="Search for products" class="flex-1 outline-none text-sm"
                             onkeypress="if(event.key === 'Enter') this.form.submit()" />
                     </div>
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by') }}" />
+
+                    <!-- Search Button -->
                     <button type="submit"
-                        class="bg-[#E73C36] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">Search</button>
-                    @if(request('search'))
-                        <a href="{{ route('admin.product') }}"
-                            class="bg-gray-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto text-center">
-                            Clear
-                        </a>
-                    @endif
+                        class="bg-[#E73C36] text-white text-sm font-medium px-4 rounded-md hover:bg-red-600 transition h-10 flex items-center justify-center min-w-[80px]">
+                        Search
+                    </button>
                 </form>
+
+                <!-- Clear Button -->
+                @if(request('search'))
+                    <a href="{{ route('admin.products.index') }}"
+                        class="bg-gray-500 text-white text-sm font-medium px-4 rounded-md hover:bg-gray-600 transition h-10 flex items-center justify-center min-w-[70px]">
+                        Clear
+                    </a>
+                @endif
+
+                <!-- Add Product Button -->
                 <button @click="showModal = true"
-                    class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto">
+                    class="bg-green-600 text-white text-sm font-medium px-4 rounded-md hover:bg-green-700 transition h-10 flex items-center justify-center min-w-[120px]">
                     + Add Product
                 </button>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
-                <form action="{{ route('admin.product') }}" method="GET"
+                <form action="{{ route('admin.products.index') }}" method="GET"
                     class="flex items-center gap-2 w-full sm:w-auto">
                     <input type="hidden" name="search" value="{{ request('search') }}">
                     <label class="text-gray-400 text-sm whitespace-nowrap">Sort by:</label>
                     <select name="sort_by" onchange="this.form.submit()"
-                        class="text-sm border rounded-md px-3 py-2 w-full sm:w-auto">
+                        class="text-sm border rounded-md px-3 py-2 w-full sm:w-auto h-10">
                         <option value="latest" {{ request('sort_by') == 'latest' ? 'selected' : '' }}>Latest</option>
                         <option value="popular" {{ request('sort_by') == 'popular' ? 'selected' : '' }}>Popular</option>
                         <option value="price_low_high" {{ request('sort_by') == 'price_low_high' ? 'selected' : '' }}>
@@ -225,17 +235,56 @@
         <!-- Menu Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @forelse($products as $product)
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative group">
+                    <!-- Action buttons (show on hover) -->
+                    <div
+                        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+                        <a href="{{ route('admin.products.edit', $product->id) }}"
+                            class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full text-xs transition-colors flex items-center justify-center"
+                            title="Edit Product">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
+                            class="inline-block" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full text-xs transition-colors flex items-center justify-center"
+                                title="Delete Product">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+
                     <img src="{{ $product->images->first()?->url ?: asset('assets/images/kabab.png') }}"
                         alt="{{ $product->name }}" class="w-full h-36 object-cover" />
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 text-base truncate">{{ $product->name }}</h3>
                         <p class="text-sm text-[#E73C36]">{{ $product->category->name }}</p>
                         <p class="text-base font-bold text-[#E73C36] mt-1">${{ number_format($product->price, 2) }}</p>
-                        <span
-                            class="inline-block mt-2 px-2 py-1 text-xs rounded-full {{ $product->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                            {{ ucfirst($product->status) }}
-                        </span>
+                        <div class="flex justify-between items-center mt-2">
+                            <span
+                                class="inline-block px-2 py-1 text-xs rounded-full {{ $product->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                {{ ucfirst($product->status) }}
+                            </span>
+                            <!-- Mobile action buttons -->
+                            <div class="flex gap-1 sm:hidden">
+                                <a href="{{ route('admin.products.edit', $product->id) }}"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white w-7 h-7 rounded text-xs flex items-center justify-center">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
+                                    class="inline-block"
+                                    onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="bg-red-500 hover:bg-red-600 text-white w-7 h-7 rounded text-xs flex items-center justify-center">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @empty
@@ -262,7 +311,7 @@
 
                 <h2 class="text-lg font-semibold mb-4">Add New Menu Item</h2>
 
-                <form action="{{ route('admin.product.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Left Form -->
