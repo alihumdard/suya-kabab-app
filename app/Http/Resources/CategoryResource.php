@@ -20,12 +20,15 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'status' => $this->status,
-
+            'main_image_url' => $this->when(
+                $this->relationLoaded('images') && $this->images->isNotEmpty(),
+                function () {
+                    return $this->images->first()->url;
+                }
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
 
-            // Image relationships
-            'images' => ImageResource::collection($this->whenLoaded('images')),
 
             // Counts
             'products_count' => $this->when(

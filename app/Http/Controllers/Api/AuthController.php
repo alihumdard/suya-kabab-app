@@ -60,7 +60,7 @@ class AuthController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -115,7 +115,7 @@ class AuthController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         $otpRecord = OtpVerification::where('otp', $request->otp)
@@ -163,7 +163,7 @@ class AuthController extends Controller
                 'error' => true,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -198,7 +198,7 @@ class AuthController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
 
@@ -232,7 +232,7 @@ class AuthController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => $validator->errors()
-            ], 422);
+            ], 403);
         }
 
         $user = User::where('email', $request->email)->first();

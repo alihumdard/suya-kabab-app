@@ -44,29 +44,48 @@ class AdminSeeder extends Seeder
                 'slug' => 'suya',
                 'description' => 'Traditional Nigerian grilled meat with spices',
                 'status' => 'active',
+                'image' => 'special-kabab-1.png',
             ],
             [
                 'name' => 'Kabab',
                 'slug' => 'kabab',
                 'description' => 'Delicious grilled kababs with various meats',
                 'status' => 'active',
+                'image' => 'kabab.png',
             ],
             [
                 'name' => 'Drinks',
                 'slug' => 'drinks',
                 'description' => 'Refreshing beverages and drinks',
                 'status' => 'active',
+                'image' => '331cecef90a30108873dafef918bd2fc3068baa1.jpg',
             ],
             [
                 'name' => 'Sides',
                 'slug' => 'sides',
                 'description' => 'Side dishes and accompaniments',
                 'status' => 'active',
+                'image' => 'banner.png',
             ],
         ];
 
-        foreach ($categories as $category) {
-            Category::create($category);
+        foreach ($categories as $categoryData) {
+            // Extract image name
+            $imageName = $categoryData['image'];
+            unset($categoryData['image']);
+
+            // Create category
+            $category = Category::create($categoryData);
+
+            // Create image for the category
+            Image::create([
+                'imageable_id' => $category->id,
+                'imageable_type' => Category::class,
+                'image_path' => 'assets/images/' . $imageName,
+                'alt_text' => $category->name . ' Category Image',
+                'mime_type' => $this->getMimeType($imageName),
+                'is_active' => true,
+            ]);
         }
 
         // Create Sample Products with Images
@@ -84,7 +103,7 @@ class AdminSeeder extends Seeder
                 'quantity' => 30,
                 'status' => 'active',
                 'featured' => true,
-                'images' => ['kabab.png', 'special-kabab-4.png']
+                'images' => ['kabab.png']
             ],
             [
                 'category_id' => 2, // Kabab
@@ -96,7 +115,7 @@ class AdminSeeder extends Seeder
 
                 'quantity' => 35,
                 'status' => 'active',
-                'images' => ['2.png', 'chef.png']
+                'images' => ['special-kabab-1.png']
             ],
             [
                 'category_id' => 3, // Drinks
@@ -148,7 +167,7 @@ class AdminSeeder extends Seeder
         }
 
         $this->command->info('AdminSeeder completed successfully!');
-        $this->command->info('Created: 1 Admin, 1 User, 4 Categories, 4 Products with Images');
+        $this->command->info('Created: 1 Admin, 1 User, 4 Categories (each with 1 Image), 4 Products (each with 1 Image)');
     }
 
     /**

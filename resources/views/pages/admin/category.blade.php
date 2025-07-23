@@ -2,7 +2,7 @@
 @include('includes.script')
 
 <!-- Wrapper -->
-<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false }">
+<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false, deleteModal: false, categoryToDelete: null }">
     @include('includes.sidebar')
 
     <!-- Page Content -->
@@ -133,17 +133,45 @@
         <!-- Category Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @forelse($categories as $category)
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow relative group">
+                    <!-- Action buttons (show on hover) -->
+                    <div
+                        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+                        <a href="{{ route('admin.categories.edit', $category->id) }}"
+                            class="bg-blue-500 hover:bg-blue-600 text-white w-8 h-8 rounded-full text-xs transition-colors flex items-center justify-center"
+                            title="Edit Category">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button @click="categoryToDelete = {{ $category->id }}; deleteModal = true"
+                            class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full text-xs transition-colors flex items-center justify-center"
+                            title="Delete Category">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+
                     <img src="{{ $category->images->first()?->url ?: asset('assets/images/kabab.png') }}"
                         alt="{{ $category->name }}" class="w-full h-36 object-cover" />
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 text-base truncate">{{ $category->name }}</h3>
-                        <p class="text-sm text-gray-600">{{ $category->description }}</p>
+                        <p class="text-sm text-gray-600">{{ $category->description ?: 'No description' }}</p>
                         <p class="text-sm text-[#E73C36] mt-1">{{ $category->products_count }} products</p>
-                        <span
-                            class="inline-block mt-2 px-2 py-1 text-xs rounded-full {{ $category->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                            {{ ucfirst($category->status) }}
-                        </span>
+                        <div class="flex justify-between items-center mt-2">
+                            <span
+                                class="inline-block px-2 py-1 text-xs rounded-full {{ $category->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                {{ ucfirst($category->status) }}
+                            </span>
+                            <!-- Mobile action buttons -->
+                            <div class="flex gap-1 sm:hidden">
+                                <a href="{{ route('admin.categories.edit', $category->id) }}"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white w-7 h-7 rounded text-xs flex items-center justify-center">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button @click="categoryToDelete = {{ $category->id }}; deleteModal = true"
+                                    class="bg-red-500 hover:bg-red-600 text-white w-7 h-7 rounded text-xs transition-colors flex items-center justify-center">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @empty
@@ -231,6 +259,15 @@
                 </form>
             </div>
         </div>
+
+        <!-- Delete Confirmation Modal -->
+        @include('pages.admin.components.delete-modal', [
+            'title' => 'Delete Category',
+            'message' => 'Are you sure you want to delete this category? This action cannot be undone.',
+            'deleteRoute' => '/admin/categories',
+            'showModal' => 'deleteModal',
+            'entityIdVariable' => 'categoryToDelete'
+        ])
 
     </div>
 </div>
