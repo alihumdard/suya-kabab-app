@@ -52,6 +52,11 @@
                 <i class="fas fa-th-large w-5 mr-3"></i> Category
             </a>
 
+            <a href="{{ route('admin.promotions.index') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}">
+                <i class="fas fa-bullhorn w-5 mr-3"></i> Promotions
+            </a>
+
             <!-- Components Dropdown -->
             <div x-data="{ open: {{ request()->routeIs('admin.form') || request()->routeIs('admin.table') || request()->routeIs('admin.card') ? 'true' : 'false' }} }"
                 class="">

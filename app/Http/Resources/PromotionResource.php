@@ -19,9 +19,6 @@ class PromotionResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'status' => $this->status,
-            //'button_text' => $this->button_text,
-            //'button_url' => $this->button_url,
-            // 'sort_order' => $this->sort_order,
             'main_image_url' => $this->when(
                 $this->relationLoaded('images') && $this->images->isNotEmpty(),
                 function () {
@@ -31,10 +28,8 @@ class PromotionResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
 
-
             // Computed attributes
             'is_active' => $this->status === 'active',
-            'has_button' => !empty($this->button_text) && !empty($this->button_url),
         ];
     }
 }

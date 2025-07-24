@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Promotion;
 use App\Models\Image;
-use Carbon\Carbon;
 
 class PromotionSeeder extends Seeder
 {
@@ -14,6 +13,13 @@ class PromotionSeeder extends Seeder
      */
     public function run(): void
     {
+        // Clean up all existing promotions and their images to avoid duplicates
+        $existingPromotions = Promotion::all();
+        foreach ($existingPromotions as $promotion) {
+            $promotion->images()->delete();
+        }
+        Promotion::query()->delete();
+
         $promotions = [
             [
                 'title' => 'Summer Sizzle Sale',
@@ -22,7 +28,7 @@ class PromotionSeeder extends Seeder
                 'button_text' => 'Order Now',
                 'button_url' => 'https://app.suyakabab.com/menu',
                 'sort_order' => 1,
-                'image_name' => 'summer_sale.jpg'
+                'image_name' => 'pro3.jpg'
             ],
             [
                 'title' => 'Ramadan Special',
@@ -31,26 +37,17 @@ class PromotionSeeder extends Seeder
                 'button_text' => 'Pre-Order',
                 'button_url' => 'https://app.suyakabab.com/ramadan',
                 'sort_order' => 2,
-                'image_name' => 'ramadan_special.jpg'
+                'image_name' => 'pro2.jpg'
             ],
             [
                 'title' => 'Eid Celebration Deal',
                 'description' => 'Celebrate Eid with our premium kabab selection! This special offer included free appetizers with every large order and complimentary dessert.',
-                'status' => 'expired',
+                'status' => 'active',
                 'button_text' => 'View Menu',
                 'button_url' => 'https://app.suyakabab.com/menu',
                 'sort_order' => 3,
-                'image_name' => 'eid_celebration.jpg'
+                'image_name' => 'pro1.jpg'
             ],
-            [
-                'title' => 'Winter Warmth Bundle',
-                'description' => 'Stay warm with our hearty winter kabab bundles! Hot, spicy, and perfect for cold nights. Get 25% off on all grilled items and hot beverages.',
-                'status' => 'inactive',
-                'button_text' => 'Coming Soon',
-                'button_url' => 'https://app.suyakabab.com/winter',
-                'sort_order' => 4,
-                'image_name' => 'winter_bundle.jpg'
-            ]
         ];
 
         foreach ($promotions as $promotionData) {
@@ -61,12 +58,11 @@ class PromotionSeeder extends Seeder
             // Create the promotion
             $promotion = Promotion::create($promotionData);
 
-            // Create a sample image record for the promotion
-            // In a real scenario, you would have actual image files
+            // Create image record for the promotion
             Image::create([
                 'imageable_type' => Promotion::class,
                 'imageable_id' => $promotion->id,
-                'image_path' => 'promotions/' . $imageName,
+                'image_path' => 'images/promotions/' . $imageName,
                 'alt_text' => $promotion->title,
                 'mime_type' => 'image/jpeg',
                 'size' => rand(50000, 200000), // Random size between 50KB - 200KB

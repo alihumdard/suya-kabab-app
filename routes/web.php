@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
 
 // Public Routes
@@ -68,6 +69,16 @@ Route::prefix('admin')->group(function () {
         // Backward compatibility route
         Route::get('category', [CategoryController::class, 'index'])->name('admin.category');
         Route::post('category', [CategoryController::class, 'store'])->name('admin.category.store');
+
+        // Promotion Management Routes
+        Route::prefix('promotions')->name('admin.promotions.')->group(function () {
+            Route::get('/', [PromotionController::class, 'index'])->name('index');
+            Route::post('/', [PromotionController::class, 'store'])->name('store');
+            Route::get('/{promotion}/edit', [PromotionController::class, 'edit'])->name('edit');
+            Route::put('/{promotion}', [PromotionController::class, 'update'])->name('update');
+            Route::delete('/{promotion}', [PromotionController::class, 'destroy'])->name('destroy');
+            Route::patch('/{promotion}/toggle-status', [PromotionController::class, 'toggleStatus'])->name('toggle-status');
+        });
 
         // Admin Components
         Route::get('form', function () {

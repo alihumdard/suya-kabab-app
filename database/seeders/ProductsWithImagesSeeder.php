@@ -87,7 +87,7 @@ class ProductsWithImagesSeeder extends Seeder
                 Image::create([
                     'imageable_id' => $product->id,
                     'imageable_type' => Product::class,
-                    'image_path' => 'assets/images/' . $imageName,
+                    'image_path' => '/images/products/' . $imageName,
                     'alt_text' => $product->name . ' Image',
                     'mime_type' => $this->getMimeType($imageName),
                     'is_active' => true,
