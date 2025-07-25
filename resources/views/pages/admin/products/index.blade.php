@@ -403,24 +403,7 @@
                                 </div>
                             </div>
 
-                            <!-- Quantity and Track Quantity -->
-                            <div class="flex gap-4">
-                                <div class="w-1/2">
-                                    <label class="block text-sm font-medium">Quantity</label>
-                                    <input type="number" name="quantity" placeholder="100"
-                                        value="{{ old('quantity', 0) }}"
-                                        class="w-full mt-1 px-4 py-2 border rounded-md @error('quantity') border-red-500 @enderror" />
-                                    @error('quantity')
-                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div class="w-1/2 flex items-center pt-6">
-                                    <label class="flex items-center">
-                                        <input type="checkbox" name="track_quantity" class="mr-2" {{ old('track_quantity') ? 'checked' : '' }}>
-                                        <span class="text-sm font-medium">Track Quantity</span>
-                                    </label>
-                                </div>
-                            </div>
+
 
                             <div>
                                 <label class="block text-sm font-medium mb-1">Item Tags</label>
