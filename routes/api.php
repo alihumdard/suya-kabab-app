@@ -43,7 +43,7 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('profile', [AuthController::class, 'profile']);
-        Route::post('profile', [AuthController::class, 'updateProfile']); // Changed to POST for multipart support
+        Route::post('profile/update', [AuthController::class, 'updateProfile']); // Changed to POST for multipart support
     });
 });
 

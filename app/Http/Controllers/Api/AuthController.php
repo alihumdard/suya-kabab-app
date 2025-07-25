@@ -268,9 +268,12 @@ class AuthController extends Controller
      */
     public function profile(Request $request)
     {
+        $user = $request->user();
+        $user->load('images');
+
         return response()->json([
             'error' => false,
-            'data' => $request->user()
+            'data' => new UserResource($user)
         ]);
     }
 
@@ -299,10 +302,6 @@ class AuthController extends Controller
                     'alt_text' => $user->name . ' profile picture',
                     'mime_type' => $request->file('profile_image')->getMimeType(),
                     'size' => $request->file('profile_image')->getSize(),
-                    'dimensions' => json_encode([
-                        'width' => null, // You can add image dimensions detection here if needed
-                        'height' => null
-                    ]),
                     'is_active' => true,
                 ]);
 
