@@ -288,7 +288,18 @@ class AuthController extends Controller
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             try {
-                // Delete old profile images
+                // Get old profile images before deleting
+                $oldImages = $user->images()->get();
+
+                // Delete old physical image files first
+                foreach ($oldImages as $oldImage) {
+                    $fullPath = public_path($oldImage->image_path);
+                    if (file_exists($fullPath)) {
+                        unlink($fullPath);
+                    }
+                }
+
+                // Delete old profile image records from database
                 $user->images()->delete();
 
                 // Use ImageHelper to save image to public/images/profiles/
