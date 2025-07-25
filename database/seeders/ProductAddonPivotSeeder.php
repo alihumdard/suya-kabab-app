@@ -30,6 +30,9 @@ class ProductAddonPivotSeeder extends Seeder
 
         // Link addons to products
         foreach ($products as $product) {
+            // Clear existing pivot data for this product to avoid duplicates
+            DB::table('product_addon_pivot')->where('product_id', $product->id)->delete();
+
             $pivotData = [];
 
             // Add all sauces to each product

@@ -103,7 +103,10 @@ class ProductAddonSeeder extends Seeder
         ];
 
         foreach ($addons as $addonData) {
-            ProductAddon::create($addonData);
+            ProductAddon::updateOrCreate(
+                ['slug' => $addonData['slug']],
+                $addonData
+            );
         }
     }
 }
