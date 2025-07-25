@@ -236,6 +236,7 @@ class ProductController extends Controller
 
         // Refresh the product with relationships to get updated is_favorite status
         $product = $product->fresh([
+            'images',
             'favoritedBy' => function ($q) {
                 $q->where('user_id', auth()->id());
             }

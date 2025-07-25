@@ -154,24 +154,7 @@
                             </div>
                         </div>
 
-                        <!-- Quantity and Track Quantity -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                                <input type="number" name="quantity" placeholder="100"
-                                    value="{{ old('quantity', $product->quantity) }}"
-                                    class="w-full px-4 py-3 border rounded-lg @error('quantity') border-red-500 @enderror" />
-                                @error('quantity')
-                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div class="flex items-center pt-8">
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="track_quantity" class="mr-3" {{ old('track_quantity', $product->track_quantity) ? 'checked' : '' }}>
-                                    <span class="text-sm font-medium text-gray-700">Track Quantity</span>
-                                </label>
-                            </div>
-                        </div>
+
 
                         <!-- Weight -->
                         <div>
