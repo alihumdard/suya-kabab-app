@@ -268,9 +268,12 @@ class AuthController extends Controller
      */
     public function profile(Request $request)
     {
+        $user = $request->user();
+        $user->load('images');
+
         return response()->json([
             'error' => false,
-            'data' => $request->user()
+            'data' => new UserResource($user)
         ]);
     }
 
@@ -285,7 +288,18 @@ class AuthController extends Controller
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
             try {
-                // Delete old profile images
+                // Get old profile images before deleting
+                $oldImages = $user->images()->get();
+
+                // Delete old physical image files first
+                foreach ($oldImages as $oldImage) {
+                    $fullPath = public_path($oldImage->image_path);
+                    if (file_exists($fullPath)) {
+                        unlink($fullPath);
+                    }
+                }
+
+                // Delete old profile image records from database
                 $user->images()->delete();
 
                 // Use ImageHelper to save image to public/images/profiles/
@@ -299,10 +313,6 @@ class AuthController extends Controller
                     'alt_text' => $user->name . ' profile picture',
                     'mime_type' => $request->file('profile_image')->getMimeType(),
                     'size' => $request->file('profile_image')->getSize(),
-                    'dimensions' => json_encode([
-                        'width' => null, // You can add image dimensions detection here if needed
-                        'height' => null
-                    ]),
                     'is_active' => true,
                 ]);
 

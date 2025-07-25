@@ -35,8 +35,6 @@ class UserResource extends JsonResource
 
             // Profile image from polymorphic relationship
             'profile_image_url' => $this->profile_image,
-            'images' => ImageResource::collection($this->whenLoaded('images')),
-
             // Computed attributes
             'has_verified_email' => !is_null($this->email_verified_at),
             'is_active' => $this->status === 'active',
