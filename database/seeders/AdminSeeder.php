@@ -155,22 +155,25 @@ class AdminSeeder extends Seeder
 
         ];
 
+        // First, create/update all products and store references
+        $createdProducts = [];
         foreach ($products as $productData) {
-            // Extract images array
             $images = $productData['images'] ?? [];
             unset($productData['images']);
-
-            // Create or update product
             $product = Product::updateOrCreate(
                 ['slug' => $productData['slug']],
                 $productData
             );
+            $createdProducts[] = ['product' => $product, 'images' => $images];
+        }
 
-            // Delete existing images for this product to avoid duplicates
+        // Then, assign images
+        foreach ($createdProducts as $entry) {
+            $product = $entry['product'];
+            $images = $entry['images'];
+            $product->refresh(); // Ensure the model is up-to-date from the DB
             $product->images()->delete();
-
-            // Create images for the product
-            foreach ($images as $index => $imageName) {
+            foreach ($images as $imageName) {
                 Image::create([
                     'imageable_id' => $product->id,
                     'imageable_type' => Product::class,

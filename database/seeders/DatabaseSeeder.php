@@ -12,13 +12,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            AdminSeeder::class,
             SettingsSeeder::class,
-            AdminSeeder::class,  // Create categories and products first
-            PromotionSeeder::class,
-            ProductAddonSeeder::class,
-            ProductAddonPivotSeeder::class,  // Now products exist for pivot seeding
             DiscountCodeSeeder::class,
-
+            AddonCategorySeeder::class,
+            ProductAddonSeeder::class,
+            ProductAddonPivotSeeder::class,
+            PromotionSeeder::class,
         ]);
 
         $this->command->info('Database seeded successfully!');

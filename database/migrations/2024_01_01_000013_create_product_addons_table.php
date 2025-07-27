@@ -4,12 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// Addon category support: Added addon_category_id for grouping addons (Drinks, Fries, Sauces)
 return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
+        // NOTE: The addon_categories table must exist before running this migration.
         Schema::create('product_addons', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // e.g., "Tomato", "Regular Fries", "Coca Cola"

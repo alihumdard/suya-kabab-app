@@ -52,6 +52,16 @@
                 <i class="fas fa-th-large w-5 mr-3"></i> Category
             </a>
 
+            <a href="{{ route('admin.addon_categories.index') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.addon_categories.*') ? 'active' : '' }}">
+                <i class="fas fa-tags w-5 mr-3"></i> Addon Categories
+            </a>
+
+            <a href="{{ route('admin.product_addons.index') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.product_addons.*') ? 'active' : '' }}">
+                <i class="fas fa-puzzle-piece w-5 mr-3"></i> Product Addons
+            </a>
+
             <a href="{{ route('admin.promotions.index') }}"
                 class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}">
                 <i class="fas fa-bullhorn w-5 mr-3"></i> Promotions

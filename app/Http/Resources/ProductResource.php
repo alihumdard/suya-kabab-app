@@ -42,26 +42,33 @@ class ProductResource extends JsonResource
             'addons' => $this->when(
                 $this->relationLoaded('addons'),
                 function () {
-                    return $this->addons->map(function ($addon) {
-                        return [
-                            'id' => $addon->id,
-                            'name' => $addon->name,
-                            'slug' => $addon->slug,
-                            'description' => $addon->description,
-                            'price' => $addon->price,
-                            'image' => $addon->image,
-                            'sku' => $addon->sku,
-                            'status' => $addon->status,
-                            'in_stock' => $addon->isInStock(),
-                            'available_quantity' => $addon->track_quantity ? $addon->quantity : null,
+                    // Group addons by category slug
+                    $grouped = $this->addons->groupBy(function ($addon) {
+                        return $addon->category ? $addon->category->name : 'uncategorized';
+                    });
 
-                            // Pivot data from product_addon_pivot table
-                            'is_required' => $addon->pivot->is_required,
-                            'min_quantity' => $addon->pivot->min_quantity,
-                            'max_quantity' => $addon->pivot->max_quantity,
-                            'sort_order' => $addon->pivot->sort_order,
+                    // Format as associative array: slug => [addons]
+                    return $grouped->mapWithKeys(function ($addons, $categorySlug) {
+                        return [
+                            $categorySlug => $addons->sortBy('pivot.sort_order')->values()->map(function ($addon) {
+                                return [
+                                    'id' => $addon->id,
+                                    'name' => $addon->name,
+                                    'slug' => $addon->slug,
+                                    'description' => $addon->description,
+                                    'price' => $addon->price,
+                                    'image' => $addon->image,
+                                    'status' => $addon->status,
+                                    'in_stock' => $addon->isInStock(),
+                                    'available_quantity' => $addon->track_quantity ? $addon->quantity : null,
+                                    'is_required' => $addon->pivot->is_required,
+                                    'min_quantity' => $addon->pivot->min_quantity,
+                                    'max_quantity' => $addon->pivot->max_quantity,
+                                    'sort_order' => $addon->pivot->sort_order,
+                                ];
+                            })
                         ];
-                    })->sortBy('sort_order')->values();
+                    });
                 }
             ),
 

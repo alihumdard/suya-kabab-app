@@ -25,6 +25,7 @@ class ProductAddon extends Model
         'quantity',
         'sort_order',
         'status',
+        'addon_category_id',
     ];
 
     /**
@@ -38,6 +39,14 @@ class ProductAddon extends Model
             'price' => 'decimal:2',
             'track_quantity' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the category that owns the addon.
+     */
+    public function category()
+    {
+        return $this->belongsTo(AddonCategory::class, 'addon_category_id');
     }
 
     /**

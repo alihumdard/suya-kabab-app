@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\AddonCategoryController;
+use App\Http\Controllers\Admin\ProductAddonController;
 
 // Public Routes
 Route::get('/', function () {
@@ -78,6 +80,28 @@ Route::prefix('admin')->group(function () {
             Route::put('/{promotion}', [PromotionController::class, 'update'])->name('update');
             Route::delete('/{promotion}', [PromotionController::class, 'destroy'])->name('destroy');
             Route::patch('/{promotion}/toggle-status', [PromotionController::class, 'toggleStatus'])->name('toggle-status');
+        });
+
+        // Addon Category Management Routes
+        Route::prefix('addon_categories')->name('admin.addon_categories.')->group(function () {
+            Route::get('/', [AddonCategoryController::class, 'index'])->name('index');
+            Route::get('/create', [AddonCategoryController::class, 'create'])->name('create');
+            Route::post('/', [AddonCategoryController::class, 'store'])->name('store');
+            Route::get('/{addon_category}', [AddonCategoryController::class, 'show'])->name('show');
+            Route::get('/{addon_category}/edit', [AddonCategoryController::class, 'edit'])->name('edit');
+            Route::put('/{addon_category}', [AddonCategoryController::class, 'update'])->name('update');
+            Route::delete('/{addon_category}', [AddonCategoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Product Addon Management Routes
+        Route::prefix('product_addons')->name('admin.product_addons.')->group(function () {
+            Route::get('/', [ProductAddonController::class, 'index'])->name('index');
+            Route::get('/create', [ProductAddonController::class, 'create'])->name('create');
+            Route::post('/', [ProductAddonController::class, 'store'])->name('store');
+            Route::get('/{product_addon}', [ProductAddonController::class, 'show'])->name('show');
+            Route::get('/{product_addon}/edit', [ProductAddonController::class, 'edit'])->name('edit');
+            Route::put('/{product_addon}', [ProductAddonController::class, 'update'])->name('update');
+            Route::delete('/{product_addon}', [ProductAddonController::class, 'destroy'])->name('destroy');
         });
 
         // Admin Components
