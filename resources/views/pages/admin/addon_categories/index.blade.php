@@ -2,7 +2,7 @@
 @include('includes.script')
 
 <!-- Wrapper -->
-<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false, deleteModal: false, categoryToDelete: null }">
+<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false, deleteModal: false, addonCategoryToDelete: null }">
     @include('includes.sidebar')
 
     <!-- Page Content -->
@@ -81,27 +81,39 @@
         <!-- Search & Add -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                <form action="{{ route('admin.addon_categories.index') }}" method="GET"
-                    class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Search addon categories..."
-                        class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#E73C36] focus:border-transparent" />
-                    <button type="submit"
-                        class="bg-[#E73C36] text-white px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">
-                        Search
-                    </button>
-                    @if(request('search'))
-                        <a href="{{ route('admin.addon_categories.index') }}"
-                            class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto">
-                            Clear
-                        </a>
-                    @endif
-                </form>
-
+                <!-- Search Input -->
+                <div class="flex items-center border rounded-md px-3 py-2 w-full sm:w-72 bg-white">
+                    <i class="fas fa-search text-gray-400 mr-2"></i>
+                    <input type="text" id="addonCategorySearchInput" value="{{ request('search') }}"
+                        placeholder="Search addon categories..." class="flex-1 outline-none text-sm"
+                        onkeypress="if(event.key === 'Enter') performAddonCategorySearch()" />
+                </div>
+                
+                <!-- Search Button -->
+                <button onclick="performAddonCategorySearch()"
+                    class="bg-[#E73C36] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">
+                    Search
+                </button>
+                
+                <!-- Clear Button -->
+                @if(request('search'))
+                    <a href="{{ route('admin.addon_categories.index') }}"
+                        class="bg-gray-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto">
+                        Clear
+                    </a>
+                @endif
+                
+                <!-- Add Addon Category Button -->
                 <button @click="showModal = true"
                     class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto">
                     + Add Addon Category
                 </button>
+                
+                <!-- Hidden Form for Search -->
+                <form id="addonCategorySearchForm" action="{{ route('admin.addon_categories.index') }}" method="GET" style="display: none;">
+                    <input type="hidden" name="search" id="addonCategorySearchValue">
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                </form>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -135,7 +147,7 @@
                     <!-- Action buttons (show on hover) -->
                     <div
                         class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
-                        <button @click="categoryToDelete = {{ $addonCategory->id }}; deleteModal = true"
+                        <button @click="addonCategoryToDelete = {{ $addonCategory->id }}; deleteModal = true"
                             class="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition text-xs">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -198,14 +210,14 @@
                             <div class="md:col-span-2 space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium">Category Name</label>
-                                    <input type="text" name="name" placeholder="Drinks, Sauces, etc."
+                                    <input type="text" name="name" id="addonCategoryName" placeholder="Drinks, Sauces, etc."
                                         class="w-full mt-1 px-4 py-2 border rounded-md" required />
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium">Slug</label>
-                                    <input type="text" name="slug" placeholder="drinks-category"
-                                        class="w-full mt-1 px-4 py-2 border rounded-md" />
+                                    <input type="text" name="slug" id="addonCategorySlug" placeholder="drinks-category"
+                                        class="w-full mt-1 px-4 py-2 border rounded-md bg-gray-50" readonly />
                                 </div>
 
                                 <div>
@@ -260,8 +272,42 @@
             'message' => 'Are you sure you want to delete this addon category? This action cannot be undone.',
             'deleteRoute' => '/admin/addon_categories',
             'showModal' => 'deleteModal',
-            'entityIdVariable' => 'categoryToDelete'
+            'entityIdVariable' => 'addonCategoryToDelete'
         ])
 
     </div>
 </div>
+
+<script>
+// Search functionality for Addon Categories
+function performAddonCategorySearch() {
+    const searchInput = document.getElementById('addonCategorySearchInput');
+    const searchValue = document.getElementById('addonCategorySearchValue');
+    const searchForm = document.getElementById('addonCategorySearchForm');
+    
+    searchValue.value = searchInput.value;
+    searchForm.submit();
+}
+
+// Auto-generate slug from addon category name
+const addonCategoryNameInput = document.getElementById('addonCategoryName');
+const addonCategorySlugInput = document.getElementById('addonCategorySlug');
+
+if (addonCategoryNameInput && addonCategorySlugInput) {
+    addonCategoryNameInput.addEventListener('input', function () {
+        if (!addonCategorySlugInput.dataset.userModified) {
+            const slug = this.value.toLowerCase()
+                .replace(/[^a-z0-9 -]/g, '') // Remove invalid characters
+                .replace(/\s+/g, '-') // Replace spaces with dashes
+                .replace(/-+/g, '-') // Replace multiple dashes with single dash
+                .trim('-'); // Remove leading/trailing dashes
+            addonCategorySlugInput.value = slug;
+        }
+    });
+
+    // Mark slug as user-modified if user types in it
+    addonCategorySlugInput.addEventListener('input', function () {
+        this.dataset.userModified = 'true';
+    });
+}
+</script>

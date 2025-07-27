@@ -81,27 +81,39 @@
         <!-- Search & Add -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                <form action="{{ route('admin.category') }}" method="GET"
-                    class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                    <div class="flex items-center border rounded-md px-3 py-2 w-full sm:w-72 bg-white">
-                        <i class="fas fa-search text-gray-400 mr-2"></i>
-                        <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Search for categories" class="flex-1 outline-none text-sm"
-                            onkeypress="if(event.key === 'Enter') this.form.submit()" />
-                    </div>
-                    <button type="submit"
-                        class="bg-[#E73C36] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">Search</button>
-                    @if(request('search'))
-                        <a href="{{ route('admin.category') }}"
-                            class="bg-gray-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto text-center">
-                            Clear
-                        </a>
-                    @endif
-                </form>
+                <!-- Search Input -->
+                <div class="flex items-center border rounded-md px-3 py-2 w-full sm:w-72 bg-white">
+                    <i class="fas fa-search text-gray-400 mr-2"></i>
+                    <input type="text" id="categorySearchInput" value="{{ request('search') }}"
+                        placeholder="Search for categories" class="flex-1 outline-none text-sm"
+                        onkeypress="if(event.key === 'Enter') performCategorySearch()" />
+                </div>
+                
+                <!-- Search Button -->
+                <button onclick="performCategorySearch()"
+                    class="bg-[#E73C36] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">
+                    Search
+                </button>
+                
+                <!-- Clear Button -->
+                @if(request('search'))
+                    <a href="{{ route('admin.category') }}"
+                        class="bg-gray-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto">
+                        Clear
+                    </a>
+                @endif
+                
+                <!-- Add Category Button -->
                 <button @click="showModal = true"
                     class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto">
                     + Add Category
                 </button>
+                
+                <!-- Hidden Form for Search -->
+                <form id="categorySearchForm" action="{{ route('admin.category') }}" method="GET" style="display: none;">
+                    <input type="hidden" name="search" id="categorySearchValue">
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                </form>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -272,3 +284,15 @@
     </div>
 </div>
 </div>
+
+<script>
+// Search functionality for Categories
+function performCategorySearch() {
+    const searchInput = document.getElementById('categorySearchInput');
+    const searchValue = document.getElementById('categorySearchValue');
+    const searchForm = document.getElementById('categorySearchForm');
+    
+    searchValue.value = searchInput.value;
+    searchForm.submit();
+}
+</script>

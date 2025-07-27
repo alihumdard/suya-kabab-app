@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
-use Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -19,12 +20,8 @@ class ProductController extends Controller
             ->active();
 
         // Eager load favorites relationship for authenticated users
-        if (auth()->check()) {
-            $query->with([
-                'favoritedBy' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }
-            ]);
+        if (Auth::check()) {
+            $query->with('favoritedBy');
         }
 
         // Filter by category
@@ -102,15 +99,13 @@ class ProductController extends Controller
         $query = Product::with(['category', 'images', 'addons']);
 
         // Eager load favorites relationship for authenticated users
-        if (auth()->check()) {
-            $query->with([
-                'favoritedBy' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }
-            ]);
+        if (Auth::check()) {
+            $query->with('favoritedBy');
         }
 
         $product = $query->active()->find($id);
+
+        // ...existing code...
 
         if (!$product) {
             return response()->json([
@@ -200,9 +195,7 @@ class ProductController extends Controller
             ->with([
                 'category',
                 'images',
-                'favoritedBy' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }
+                'favoritedBy'
             ])
             ->where('status', 'active')
             ->latest('user_favorites.created_at')
@@ -237,9 +230,7 @@ class ProductController extends Controller
         // Refresh the product with relationships to get updated is_favorite status
         $product = $product->fresh([
             'images',
-            'favoritedBy' => function ($q) {
-                $q->where('user_id', auth()->id());
-            }
+            'favoritedBy'
         ]);
 
         return response()->json([

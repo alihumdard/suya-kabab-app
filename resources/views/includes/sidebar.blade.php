@@ -42,25 +42,65 @@
                 <i class="fas fa-utensils w-5 mr-3"></i> Menu
             </a>
 
-            <a href="{{ route('admin.products.index') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
-                <i class="fas fa-box-open w-5 mr-3"></i> Products
-            </a>
+            <!-- Products Dropdown -->
+            <div x-data="{ open: {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.product_addons.*') ? 'true' : 'false' }} }"
+                class="">
+                <div class=" hover:bg-red-100 hover:text-[#E73C36] px-6">
+                    <button @click="open = !open"
+                        class="w-full flex items-center justify-between py-3 px-4 rounded-lg text-gray-700 transition duration-200 focus:outline-none {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.product_addons.*') ? 'text-[#E73C36] bg-red-50' : '' }}">
+                        <span class="flex items-center">
+                            <i class="fas fa-box-open w-5 mr-3"></i>
+                            Products
+                        </span>
+                        <svg class="w-4 h-4 transform transition-transform duration-200"
+                            :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Dropdown Items -->
+                <div x-show="open" x-collapse class="mt-2 pl-8 space-y-1 text-sm">
+                    <a href="{{ route('admin.products.index') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
+                        <i class="fas fa-box w-4 mr-2"></i> Main Products
+                    </a>
+                    <a href="{{ route('admin.product_addons.index') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.product_addons.*') ? 'active' : '' }}">
+                        <i class="fas fa-puzzle-piece w-4 mr-2"></i> Product Addons
+                    </a>
+                </div>
+            </div>
 
-            <a href="{{ route('admin.category') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.category') ? 'active' : '' }}">
-                <i class="fas fa-th-large w-5 mr-3"></i> Category
-            </a>
-
-            <a href="{{ route('admin.addon_categories.index') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.addon_categories.*') ? 'active' : '' }}">
-                <i class="fas fa-tags w-5 mr-3"></i> Addon Categories
-            </a>
-
-            <a href="{{ route('admin.product_addons.index') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.product_addons.*') ? 'active' : '' }}">
-                <i class="fas fa-puzzle-piece w-5 mr-3"></i> Product Addons
-            </a>
+            <!-- Categories Dropdown -->
+            <div x-data="{ open: {{ request()->routeIs('admin.category') || request()->routeIs('admin.addon_categories.*') ? 'true' : 'false' }} }"
+                class="">
+                <div class=" hover:bg-red-100 hover:text-[#E73C36] px-6">
+                    <button @click="open = !open"
+                        class="w-full flex items-center justify-between py-3 px-4 rounded-lg text-gray-700 transition duration-200 focus:outline-none {{ request()->routeIs('admin.category') || request()->routeIs('admin.addon_categories.*') ? 'text-[#E73C36] bg-red-50' : '' }}">
+                        <span class="flex items-center">
+                            <i class="fas fa-th-large w-5 mr-3"></i>
+                            Categories
+                        </span>
+                        <svg class="w-4 h-4 transform transition-transform duration-200"
+                            :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Dropdown Items -->
+                <div x-show="open" x-collapse class="mt-2 pl-8 space-y-1 text-sm">
+                    <a href="{{ route('admin.category') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.category') ? 'active' : '' }}">
+                        <i class="fas fa-th w-4 mr-2"></i> Main Categories
+                    </a>
+                    <a href="{{ route('admin.addon_categories.index') }}"
+                        class="sidebar-link block px-4 py-2 rounded-md text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.addon_categories.*') ? 'active' : '' }}">
+                        <i class="fas fa-tags w-4 mr-2"></i> Addon Categories
+                    </a>
+                </div>
+            </div>
 
             <a href="{{ route('admin.promotions.index') }}"
                 class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}">

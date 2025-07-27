@@ -2,7 +2,7 @@
 @include('includes.script')
 
 <!-- Wrapper -->
-<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false }"
+<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false, deleteModal: false, productToDelete: null }"
     x-init="@if($errors->any()) showModal = true @endif">
     @include('includes.sidebar')
 
@@ -144,6 +144,16 @@
                         });
                     });
                 });
+                
+                // Search functionality
+                function performSearch() {
+                    const searchInput = document.getElementById('searchInput');
+                    const searchValue = document.getElementById('searchValue');
+                    const searchForm = document.getElementById('searchForm');
+                    
+                    searchValue.value = searchInput.value;
+                    searchForm.submit();
+                }
             </script>
 
         </div>
@@ -170,38 +180,40 @@
 
         <!-- Search & Add -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-            <div class="flex items-center gap-3 w-full lg:w-auto">
-                <!-- Search Form -->
-                <form action="{{ route('admin.products.index') }}" method="GET" class="flex items-center gap-3">
-                    <!-- Search Input -->
-                    <div class="flex items-center border rounded-md px-3 bg-white h-10 w-full sm:w-72">
-                        <i class="fas fa-search text-gray-400 mr-2"></i>
-                        <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Search for products" class="flex-1 outline-none text-sm"
-                            onkeypress="if(event.key === 'Enter') this.form.submit()" />
-                    </div>
-                    <input type="hidden" name="sort_by" value="{{ request('sort_by') }}" />
-
-                    <!-- Search Button -->
-                    <button type="submit"
-                        class="bg-[#E73C36] text-white text-sm font-medium px-4 rounded-md hover:bg-red-600 transition h-10 flex items-center justify-center min-w-[80px]">
-                        Search
-                    </button>
-                </form>
-
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                <!-- Search Input -->
+                <div class="flex items-center border rounded-md px-3 py-2 w-full sm:w-72 bg-white">
+                    <i class="fas fa-search text-gray-400 mr-2"></i>
+                    <input type="text" id="searchInput" value="{{ request('search') }}"
+                        placeholder="Search for products" class="flex-1 outline-none text-sm"
+                        onkeypress="if(event.key === 'Enter') performSearch()" />
+                </div>
+                
+                <!-- Search Button -->
+                <button onclick="performSearch()"
+                    class="bg-[#E73C36] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">
+                    Search
+                </button>
+                
                 <!-- Clear Button -->
                 @if(request('search'))
                     <a href="{{ route('admin.products.index') }}"
-                        class="bg-gray-500 text-white text-sm font-medium px-4 rounded-md hover:bg-gray-600 transition h-10 flex items-center justify-center min-w-[70px]">
+                        class="bg-gray-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto">
                         Clear
                     </a>
                 @endif
-
+                
                 <!-- Add Product Button -->
                 <button @click="showModal = true"
-                    class="bg-green-600 text-white text-sm font-medium px-4 rounded-md hover:bg-green-700 transition h-10 flex items-center justify-center min-w-[120px]">
+                    class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto">
                     + Add Product
                 </button>
+                
+                <!-- Hidden Form for Search -->
+                <form id="searchForm" action="{{ route('admin.products.index') }}" method="GET" style="display: none;">
+                    <input type="hidden" name="search" id="searchValue">
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                </form>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -244,16 +256,11 @@
                             title="Edit Product">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
-                            class="inline-block" onsubmit="return confirm('Are you sure you want to delete this product?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full text-xs transition-colors flex items-center justify-center"
-                                title="Delete Product">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        <button @click="productToDelete = {{ $product->id }}; deleteModal = true"
+                            class="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full text-xs transition-colors flex items-center justify-center"
+                            title="Delete Product">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
 
                     <img src="{{ $product->images->first()?->url ?: asset('assets/images/kabab.png') }}"
@@ -273,16 +280,10 @@
                                     class="bg-blue-500 hover:bg-blue-600 text-white w-7 h-7 rounded text-xs flex items-center justify-center">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST"
-                                    class="inline-block"
-                                    onsubmit="return confirm('Are you sure you want to delete this product?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="bg-red-500 hover:bg-red-600 text-white w-7 h-7 rounded text-xs flex items-center justify-center">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <button @click="productToDelete = {{ $product->id }}; deleteModal = true"
+                                    class="bg-red-500 hover:bg-red-600 text-white w-7 h-7 rounded text-xs flex items-center justify-center">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -469,6 +470,15 @@
                 </form>
             </div>
         </div>
+
+        <!-- Delete Confirmation Modal -->
+        @include('pages.admin.components.delete-modal', [
+            'title' => 'Delete Product',
+            'message' => 'Are you sure you want to delete this product? This action cannot be undone.',
+            'deleteRoute' => '/admin/products',
+            'showModal' => 'deleteModal',
+            'entityIdVariable' => 'productToDelete'
+        ])
 
     </div>
 </div>
