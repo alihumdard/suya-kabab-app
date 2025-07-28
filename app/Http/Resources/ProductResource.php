@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 
 class ProductResource extends JsonResource
 {
@@ -38,6 +39,11 @@ class ProductResource extends JsonResource
             'updated_at' => $this->updated_at,
 
             // Relationships
+            'is_favorite' => Auth::check()
+                ? ($this->relationLoaded('favoritedBy')
+                    ? $this->favoritedBy->contains('id', Auth::id())
+                    : false)
+                : null,
             'category' => $this->whenLoaded('category'),
             'addons' => $this->when(
                 $this->relationLoaded('addons'),
@@ -78,16 +84,6 @@ class ProductResource extends JsonResource
             'in_stock' => $this->isInStock(),
 
             // User-specific data (only when user is authenticated)
-            'is_favorite' => $this->when(
-                auth()->check(),
-                function () {
-                    return $this->relationLoaded('favoritedBy')
-                        ? $this->favoritedBy->contains('id', auth()->id())
-                        : false;
-                }
-            ),
         ];
     }
-
-
 }

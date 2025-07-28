@@ -285,8 +285,8 @@ class AuthController extends Controller
         $user = auth()->user();
         $validatedData = $request->validated();
 
-        // Handle profile image upload
-        if ($request->hasFile('profile_image')) {
+        // Handle profile image upload (both FormData and Base64)
+        if ($request->hasFile('profile_image') || $request->has('profile_image_base64')) {
             try {
                 // Get old profile images before deleting
                 $oldImages = $user->images()->get();
@@ -302,27 +302,76 @@ class AuthController extends Controller
                 // Delete old profile image records from database
                 $user->images()->delete();
 
-                // Use ImageHelper to save image to public/images/profiles/
-                $imagePath = ImageHelper::saveImage($request->file('profile_image'), 'images/profiles');
+                $imagePath = null;
+                $mimeType = null;
+                $fileSize = null;
+
+                // Handle FormData file upload (multipart/form-data)
+                if ($request->hasFile('profile_image')) {
+                    $imagePath = ImageHelper::saveImage($request->file('profile_image'), 'images/profiles');
+                    $mimeType = $request->file('profile_image')->getMimeType();
+                    $fileSize = $request->file('profile_image')->getSize();
+                }
+                // Handle Base64 image upload (application/json)
+                elseif ($request->has('profile_image_base64')) {
+                    $base64Data = $request->input('profile_image_base64');
+                    $fileName = $request->input('profile_image_name', 'profile_image.jpg');
+                    $mimeType = $request->input('profile_image_type', 'image/jpeg');
+                    
+                    // Remove data:image/jpeg;base64, prefix if present
+                    if (strpos($base64Data, 'data:') === 0) {
+                        $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
+                    }
+                    
+                    // Decode base64
+                    $imageData = base64_decode($base64Data);
+                    if ($imageData === false) {
+                        throw new \Exception('Invalid base64 image data');
+                    }
+                    
+                    // Generate unique filename
+                    $extension = explode('/', $mimeType)[1] ?? 'jpg';
+                    $uniqueFileName = uniqid() . '_' . time() . '.' . $extension;
+                    
+                    // Create directory if it doesn't exist
+                    $uploadPath = public_path('images/profiles');
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+                    
+                    // Save file
+                    $fullPath = $uploadPath . '/' . $uniqueFileName;
+                    if (file_put_contents($fullPath, $imageData) === false) {
+                        throw new \Exception('Failed to save image file');
+                    }
+                    
+                    $imagePath = 'images/profiles/' . $uniqueFileName;
+                    $fileSize = strlen($imageData);
+                }
 
                 // Create polymorphic image record
-                Image::create([
-                    'imageable_type' => User::class,
-                    'imageable_id' => $user->id,
-                    'image_path' => $imagePath,
-                    'alt_text' => $user->name . ' profile picture',
-                    'mime_type' => $request->file('profile_image')->getMimeType(),
-                    'size' => $request->file('profile_image')->getSize(),
-                    'is_active' => true,
-                ]);
+                if ($imagePath) {
+                    Image::create([
+                        'imageable_type' => User::class,
+                        'imageable_id' => $user->id,
+                        'image_path' => $imagePath,
+                        'alt_text' => $user->name . ' profile picture',
+                        'mime_type' => $mimeType,
+                        'size' => $fileSize,
+                        'is_active' => true,
+                    ]);
+                }
 
-                // Remove profile_image from validated data since we handle it separately
+                // Remove image-related fields from validated data since we handle them separately
                 unset($validatedData['profile_image']);
+                unset($validatedData['profile_image_base64']);
+                unset($validatedData['profile_image_name']);
+                unset($validatedData['profile_image_type']);
 
             } catch (\Exception $e) {
                 return response()->json([
                     'error' => true,
-                    'message' => 'Failed to upload profile image. Please try again.'
+                    'message' => 'Failed to upload profile image: ' . $e->getMessage()
                 ], 500);
             }
         }

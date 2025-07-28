@@ -44,13 +44,17 @@ Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('profile', [AuthController::class, 'profile']);
         Route::post('profile', [AuthController::class, 'updateProfile']); // Changed to POST for multipart support
+        Route::post('profile/update', [AuthController::class, 'updateProfile']); // Alternative endpoint
     });
 });
 
-// Public API Routes
-Route::get('products', [ProductController::class, 'index']);
-Route::get('products/{id}', [ProductController::class, 'show']);
-Route::get('products/{id}/customizations', [ProductController::class, 'customizations']);
+// Protected Product Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{id}', [ProductController::class, 'show']);
+    Route::get('products/{id}/customizations', [ProductController::class, 'customizations']);
+});
+// Public Category Routes
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
 

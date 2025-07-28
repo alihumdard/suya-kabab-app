@@ -1,8 +1,39 @@
 @include('includes.head')
 @include('includes.script')
 
+<style>
+/* Prevent delete modal flash during page load/navigation */
+[x-cloak] { display: none !important; }
+.delete-modal-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+</style>
+
 <!-- Wrapper -->
-<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ showModal: false, deleteModal: false, addonToDelete: null }">
+<div class="flex min-h-screen bg-[#FDF7F2]" x-data="{ 
+        showModal: false, 
+        deleteModal: false, 
+        addonToDelete: null,
+        init() {
+            // Force modal to be hidden on initialization
+            this.deleteModal = false;
+            this.addonToDelete = null;
+            @if($errors->any()) 
+                this.showModal = true; 
+            @endif
+        },
+        openDeleteModal(id) {
+            this.addonToDelete = id;
+            this.deleteModal = true;
+        },
+        closeDeleteModal() {
+            this.deleteModal = false;
+            this.addonToDelete = null;
+        }
+    }"
+    x-init="init()">
     @include('includes.sidebar')
 
     <!-- Page Content -->
@@ -81,26 +112,39 @@
         <!-- Search & Add -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                <form action="{{ route('admin.product_addons.index') }}" method="GET"
-                    class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Search product addons..."
-                        class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#E73C36] focus:border-transparent" />
-                    <button type="submit"
-                        class="bg-[#E73C36] text-white px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">
-                        Search
-                    </button>
-                    @if(request('search'))
-                        <a href="{{ route('admin.product_addons.index') }}" class="btn btn-secondary w-100">
-                            Clear
-                        </a>
-                    @endif
-                </form>
-
+                <!-- Search Input -->
+                <div class="flex items-center border rounded-md px-3 py-2 w-full sm:w-72 bg-white">
+                    <i class="fas fa-search text-gray-400 mr-2"></i>
+                    <input type="text" id="addonSearchInput" value="{{ request('search') }}"
+                        placeholder="Search product addons..." class="flex-1 outline-none text-sm"
+                        onkeypress="if(event.key === 'Enter') performAddonSearch()" />
+                </div>
+                
+                <!-- Search Button -->
+                <button onclick="performAddonSearch()"
+                    class="bg-[#E73C36] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-red-600 transition w-full sm:w-auto">
+                    Search
+                </button>
+                
+                <!-- Clear Button -->
+                @if(request('search'))
+                    <a href="{{ route('admin.product_addons.index') }}"
+                        class="bg-gray-500 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-600 transition w-full sm:w-auto">
+                        Clear
+                    </a>
+                @endif
+                
+                <!-- Add Product Addon Button -->
                 <button @click="showModal = true"
                     class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-green-700 transition w-full sm:w-auto">
                     + Add Product Addon
                 </button>
+                
+                <!-- Hidden Form for Search -->
+                <form id="addonSearchForm" action="{{ route('admin.product_addons.index') }}" method="GET" style="display: none;">
+                    <input type="hidden" name="search" id="addonSearchValue">
+                    <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                </form>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -218,17 +262,11 @@
                                         style="height: 28px;" title="Edit">
                                         Edit
                                     </a>
-                                    <form method="POST" action="{{ route('admin.product_addons.destroy', $addon) }}"
-                                        class="inline-block"
-                                        onsubmit="return confirm('Are you sure you want to delete this addon?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs w-16 flex items-center justify-center"
-                                            style="height: 28px;" title="Delete">
-                                            Delete
-                                        </button>
-                                    </form>
+                                    <button @click="openDeleteModal({{ $addon->id }})"
+                                        class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs w-16 flex items-center justify-center"
+                                        style="height: 28px;" title="Delete">
+                                        Delete
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -378,5 +416,96 @@
             'entityIdVariable' => 'addonToDelete'
         ])
 
+    </div>
+</div>
+
+<script>
+// Search functionality for Product Addons
+function performAddonSearch() {
+    const searchInput = document.getElementById('addonSearchInput');
+    const searchValue = document.getElementById('addonSearchValue');
+    const searchForm = document.getElementById('addonSearchForm');
+    
+    searchValue.value = searchInput.value;
+    searchForm.submit();
+}
+
+// Ensure delete modal is hidden on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Force hide delete modal on page load
+    const deleteModal = document.querySelector('[x-show="deleteModal"]');
+    if (deleteModal) {
+        deleteModal.style.display = 'none';
+    }
+    
+    // Auto-generate slug from name
+    const nameInput = document.getElementById('addon-name');
+    const slugInput = document.getElementById('addon-slug');
+    
+    if (nameInput && slugInput) {
+        nameInput.addEventListener('input', function() {
+            if (!slugInput.dataset.userModified) {
+                const slug = this.value.toLowerCase()
+                    .replace(/[^a-z0-9 -]/g, '') // Remove invalid characters
+                    .replace(/\s+/g, '-') // Replace spaces with dashes
+                    .replace(/-+/g, '-') // Replace multiple dashes with single dash
+                    .trim('-'); // Remove leading/trailing dashes
+                slugInput.value = slug;
+            }
+        });
+        
+        // Mark slug as user-modified if user types in it
+        slugInput.addEventListener('input', function() {
+            this.dataset.userModified = 'true';
+        });
+    }
+});
+</script>
+
+<!-- Delete Confirmation Modal -->
+<div x-show="deleteModal" 
+     x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 delete-modal-hidden"
+     :class="{ 'delete-modal-hidden': !deleteModal }"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     style="display: none !important;"
+     :style="deleteModal ? 'display: flex !important;' : 'display: none !important;'">
+    <div class="bg-white w-full max-w-md mx-4 p-6 rounded-lg" @click.away="closeDeleteModal()">
+        <div class="text-center">
+            <!-- Icon -->
+            <div class="w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-trash text-red-500 text-xl"></i>
+            </div>
+            
+            <!-- Title -->
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Delete Product Addon</h3>
+            
+            <!-- Message -->
+            <p class="text-gray-600 mb-6">Are you sure you want to delete this product addon? This action cannot be undone.</p>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-4 justify-center items-start">
+                <!-- Cancel Button -->
+                <button @click="closeDeleteModal()"
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-md transition-colors font-medium text-sm min-w-[90px] h-12 flex items-center justify-center">
+                    Cancel
+                </button>
+                
+                <!-- Delete Form -->
+                <form x-bind:action="'{{ route('admin.product_addons.index') }}/' + addonToDelete" method="POST" class="inline-block m-0 p-0">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                        class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-md transition-colors font-medium text-sm min-w-[90px] h-12 flex items-center justify-center">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
