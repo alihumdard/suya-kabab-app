@@ -27,7 +27,6 @@ class UserResource extends JsonResource
             'postal_code' => $this->postal_code,
             'country' => $this->country,
             'status' => $this->status,
-            'rewards_balance' => $this->rewards_balance,
             'last_login_at' => $this->last_login_at,
             'email_verified_at' => $this->email_verified_at,
             'created_at' => $this->created_at,

@@ -32,8 +32,8 @@
                 <i class="fas fa-home w-5 mr-3"></i> Dashboard
             </a>
 
-            <a href="{{ route('admin.orders') }}"
-                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.orders') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders.index') }}"
+                class="sidebar-link flex items-center px-10 py-3 rounded-lg text-gray-700 hover:bg-red-100 hover:text-[#E73C36] transition duration-200 {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                 <i class="fas fa-clipboard-list w-5 mr-3"></i> Orders
             </a>
 

@@ -26,6 +26,14 @@ class OrderItem extends Model
     ];
 
     /**
+     * Get the addons for the order item.
+     */
+    public function addons()
+    {
+        return $this->hasMany(OrderItemAddon::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

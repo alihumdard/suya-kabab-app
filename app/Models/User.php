@@ -31,7 +31,6 @@ class User extends Authenticatable
         'postal_code',
         'country',
         'status',
-        'rewards_balance',
         'last_login_at',
     ];
 
@@ -56,7 +55,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'date_of_birth' => 'date',
-            'rewards_balance' => 'decimal:2',
             'password' => 'hashed',
         ];
     }
@@ -107,24 +105,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has sufficient rewards balance.
-     */
-    public function hasRewardsBalance($amount)
-    {
-        return $this->rewards_balance >= $amount;
-    }
-
-    /**
      * Use rewards balance.
      */
     public function useRewardsBalance($amount)
     {
-        if (!$this->hasRewardsBalance($amount)) {
-            throw new \Exception('Insufficient rewards balance');
-        }
-
-        $this->decrement('rewards_balance', $amount);
-        return $this;
+        throw new \Exception('Rewards balance functionality is removed');
     }
 
     /**
@@ -132,8 +117,6 @@ class User extends Authenticatable
      */
     public function addRewardsBalance($amount)
     {
-        $this->increment('rewards_balance', $amount);
-        return $this;
+        throw new \Exception('Rewards balance functionality is removed');
     }
-
 }

@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
     Route::post('orders/cancel/{id}', [OrderController::class, 'cancel']);
+    Route::post('coupon/validate', [OrderController::class, 'validateCoupon']);
 
     // User profile route (alternative)
     Route::get('/user', function (Request $request) {
