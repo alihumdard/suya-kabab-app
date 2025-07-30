@@ -48,7 +48,6 @@ if (!function_exists('sendOTP')) {
                 'email' => $email,
                 'otp_id' => $otpRecord->id,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to save OTP to database', [
                 'email' => $email,
@@ -103,7 +102,6 @@ if (!function_exists('sendOTP')) {
                 'type' => $type,
                 'user_type' => $userType
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to send OTP notification', [
                 'email' => $email,
@@ -167,22 +165,14 @@ if (!function_exists('calculateDiscount')) {
             $result['is_valid'] = true;
         }
 
-        // Calculate rewards discount
-        if ($useRewardsBalance && $rewardsAmount && $user) {
-            $availableRewards = $user->rewards_balance ?? 0;
-            $result['rewards_discount'] = min($rewardsAmount, $availableRewards, $subtotal);
-        }
-
         // Calculate total savings
-        $result['total_savings'] = $result['discount_amount'] + $result['rewards_discount'];
+        $result['total_savings'] = $result['discount_amount'];
 
         Log::info('Discount result', [
             'discount_amount' => $result['discount_amount'],
-            'rewards_discount' => $result['rewards_discount'],
             'total_savings' => $result['total_savings']
         ]);
 
         return $result;
     }
 }
-

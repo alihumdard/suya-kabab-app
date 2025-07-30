@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\OrderController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -41,10 +42,13 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['admin'])->group(function () {
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
-        // Admin Pages
-        Route::get('orders', function () {
-            return view('pages.admin.orders');
-        })->name('admin.orders');
+        // Admin Pages - Orders
+        Route::prefix('orders')->group(function () {
+            Route::get('/', [OrderController::class, 'index'])->name('admin.orders.index');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('admin.orders.show');
+            Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update-status');
+            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('admin.orders.destroy');
+        });
 
         Route::get('menu', function () {
             return view('pages.admin.menu');

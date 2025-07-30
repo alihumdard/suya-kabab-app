@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateOrderRequest;
+use App\Http\Resources\OrderResource;
+use App\Models\AddonCategory;
 use App\Models\Order;
+use Illuminate\Support\Str;
 
 use App\Models\DiscountCode;
 use App\Models\Setting;
+use App\Models\Product;
+use App\Models\ProductAddon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
@@ -48,11 +52,9 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $subtotal = 0;
-            $addonTotal = 0;
             $orderItems = [];
 
-            // Validate order items and calculate total
+            // Validate order items
             foreach ($request->items as $item) {
                 $product = Product::find($item['product_id']);
 
@@ -68,67 +70,72 @@ class OrderController extends Controller
                     throw new \Exception("Insufficient stock for {$product->name}");
                 }
 
-                $itemTotal = $product->price * $item['quantity'];
+                // Get addon total from request or process addons if not provided
                 $itemAddonTotal = $item['addon_total'] ?? 0;
-                $subtotal += $itemTotal;
-                $addonTotal += $itemAddonTotal;
+                $itemAddons = [];
+                
+                // If addon_total is not provided, process addons to get the total
+                if (!isset($item['addon_total'])) {
+                    $addonResult = $this->processAddons($item);
+                    $itemAddons = $addonResult['addons'];
+                    $itemAddonTotal = $addonResult['addon_total'];
+                }
 
                 $orderItems[] = [
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'price' => $product->price,
-                    'total' => $itemTotal,
+                    'total' => $item['total'] ?? ($product->price * $item['quantity']),
                     'customizations' => $item['customizations'] ?? null,
                     'special_instructions' => $item['special_instructions'] ?? null,
                     'addon_total' => $itemAddonTotal,
+                    'addons' => !empty($itemAddons) ? $itemAddons : null,
                 ];
             }
 
-            // Add addon total to subtotal
-            $subtotal += $addonTotal;
-
-            // Calculate delivery charges dynamically
-            $deliveryCharges = Setting::calculateDeliveryCharges($subtotal, $request->delivery_method);
-
-            // Calculate discount
-            $discountAmount = 0;
-            $discountCode = null;
-            if ($request->discount_code) {
-                $discountCode = DiscountCode::where('code', $request->discount_code)->first();
-                if ($discountCode && $discountCode->isValid($subtotal)) {
-                    $discountAmount = $discountCode->calculateDiscount($subtotal);
-                }
-            }
-
-            // Calculate rewards discount
-            $rewardsDiscount = 0;
-            if ($request->use_rewards_balance && $request->rewards_amount) {
-                $user = $request->user();
-                $availableRewards = $user->rewards_balance ?? 0;
-                $rewardsDiscount = min($request->rewards_amount, $availableRewards, $subtotal);
-            }
-
-            $totalAmount = $subtotal + $deliveryCharges - $discountAmount - $rewardsDiscount;
+            // Get subtotal and total from request
+            $subtotal = $request->subtotal;
+            $totalAmount = $request->total_amount;
+            $deliveryCharges = $request->delivery_charges ?? 0;
+            $discountAmount = $request->discount_amount ?? 0;
 
             // Create order
             $order = Order::create([
                 'user_id' => $request->user()->id,
                 'order_number' => Order::generateOrderNumber(),
                 'subtotal' => $subtotal,
-                'tax_amount' => 0, // Can be calculated based on business logic
                 'shipping_amount' => $deliveryCharges,
                 'discount_amount' => $discountAmount,
                 'total_amount' => max(0, $totalAmount),
                 'delivery_method' => $request->delivery_method,
+                'payment_method' => $request->payment_method,
                 'delivery_address' => $request->delivery_address,
                 'delivery_phone' => $request->delivery_phone,
                 'delivery_instructions' => $request->delivery_instructions,
-                'notes' => $request->notes,
+                'status' => 'pending', // Always set status to pending by default
             ]);
 
             // Create order items
-            foreach ($orderItems as $item) {
-                $order->items()->create($item);
+            foreach ($orderItems as $index => $item) {
+                $orderItem = $order->items()->create($item);
+                
+                // Save only the addons that were in the original request for this item
+                $requestItem = $request->items[$index] ?? [];
+                $baseFields = ['product_id', 'quantity', 'customizations', 'special_instructions', 'addon_total'];
+                $requestedAddonTypes = array_diff(array_keys($requestItem), $baseFields);
+                
+                if (!empty($item['addons'])) {
+                    foreach ($item['addons'] as $addon) {
+                        // Only save addons that match the requested types in the original request
+                        if (in_array(strtolower($addon['addon_type']), array_map('strtolower', $requestedAddonTypes))) {
+                            $orderItem->addons()->create([
+                                'product_addon_id' => $addon['addon_id'],
+                                'quantity' => $item['quantity'],
+                                'price' => $addon['price']
+                            ]);
+                        }
+                    }
+                }
             }
 
             // Update product quantities
@@ -139,28 +146,27 @@ class OrderController extends Controller
                 }
             }
 
-            // Use rewards balance if applicable
-            if ($rewardsDiscount > 0) {
-                $user->useRewardsBalance($rewardsDiscount);
-            }
-
-            // Mark discount code as used
-            if ($discountCode && $discountAmount > 0) {
-                $discountCode->markAsUsed();
-            }
+            // Discount code usage is now tracked on the frontend
 
             DB::commit();
 
-            $order->load(['items.product.images']);
+            // Eager load all necessary relationships with addon categories
+            $order->load([
+                'items' => function($query) {
+                    $query->with([
+                        'product.images',
+                        'addons' => function($query) {
+                            $query->with(['productAddon.category']);
+                        }
+                    ]);
+                }
+            ]);
 
             return response()->json([
                 'error' => false,
                 'message' => 'Order created successfully',
-                'data' => [
-                    'order' => $order
-                ]
+                'data' => new OrderResource($order)
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -172,11 +178,105 @@ class OrderController extends Controller
     }
 
     /**
+     * Process addons for an order item
+     *
+     * @param array $item The order item data
+     * @return array
+     */
+    protected function processAddons(array $item): array
+    {
+        $baseFields = ['product_id', 'quantity', 'customizations', 'special_instructions', 'addon_total'];
+        $addonFields = array_diff(array_keys($item), $baseFields);
+
+        $addons = [];
+        $addonTotal = 0;
+
+        \Log::info('Processing addons for item', [
+            'product_id' => $item['product_id'],
+            'addon_fields' => $addonFields,
+            'item_data' => $item
+        ]);
+
+        foreach ($addonFields as $addonType) {
+            // Skip if the addon type is not an array
+            if (!is_array($item[$addonType] ?? null)) {
+                \Log::debug('Skipping non-array addon type', ['addon_type' => $addonType]);
+                continue;
+            }
+            
+            // Log the addon type being processed
+            \Log::debug('Processing addon type', ['addon_type' => $addonType]);
+            
+            // First try to find by exact slug or name match
+            $category = AddonCategory::where('slug', $addonType)
+                ->orWhere('name', $addonType)
+                ->first();
+                
+            // If not found, try case-insensitive match
+            if (!$category) {
+                $category = AddonCategory::whereRaw('LOWER(slug) = ?', [strtolower($addonType)])
+                    ->orWhereRaw('LOWER(name) = ?', [strtolower($addonType)])
+                    ->first();
+            }
+            
+            // If still not found, try to match with singular/plural forms
+            if (!$category) {
+                $singular = Str::singular($addonType);
+                $plural = Str::plural($addonType);
+                
+                if ($singular !== $addonType || $plural !== $addonType) {
+                    $category = AddonCategory::whereIn('slug', [$singular, $plural])
+                        ->orWhereIn('name', [$singular, $plural])
+                        ->first();
+                }
+            }
+
+            if (!$category) {
+                \Log::warning('Category not found', ['addon_type' => $addonType]);
+                continue; // Skip unknown category
+            }
+
+            // Get unique addon IDs from the request
+            $addonIds = collect($item[$addonType])
+                ->pluck('id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (empty($addonIds)) {
+                continue;
+            }
+
+            // Get only addons that exist in this category
+            $matchedAddons = ProductAddon::whereIn('id', $addonIds)
+                ->where('addon_category_id', $category->id)
+                ->get();
+
+
+            foreach ($matchedAddons as $addon) {
+                $addons[] = [
+                    'addon_type' => $addonType,
+                    'addon_id' => $addon->id,
+                    'name' => $addon->name,
+                    'price' => $addon->price,
+                ];
+                $addonTotal += $addon->price * $item['quantity'];
+            }
+        }
+
+        return [
+            'addons' => $addons,
+            'addon_total' => $addonTotal
+        ];
+    }
+
+    /**
      * Display the specified order.
      */
     public function show($id, Request $request)
     {
-        $order = Order::with(['items.product.images'])
+        $order = Order::with(['items.product.images', 'items.addons'])
             ->where('user_id', $request->user()->id)
             ->find($id);
 
@@ -214,7 +314,7 @@ class OrderController extends Controller
             $message = match ($order->status) {
                 'cancelled' => 'Order is already cancelled',
                 'processing' => 'Order is being processed and cannot be cancelled',
-                'shipped' => 'Order has been shipped and cannot be cancelled',
+                'dispatched' => 'Order has been dispatched and cannot be cancelled',
                 'delivered' => 'Order has been delivered and cannot be cancelled',
                 default => 'Order cannot be cancelled'
             };
@@ -245,7 +345,6 @@ class OrderController extends Controller
                 'message' => 'Order cancelled successfully',
                 'data' => $order
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -256,5 +355,54 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * Validate a discount code.
+     */
+    public function validateCoupon(Request $request)
+    {
+        $request->validate([
+            'discount_code' => 'required|string|exists:discount_codes,code',
+        ]);
 
+        $discountCode = DiscountCode::where('code', $request->discount_code)
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                      ->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                      ->orWhere('expires_at', '>=', now());
+            })
+            ->first();
+
+        if (!$discountCode) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Invalid or expired discount code.'
+            ], 400);
+        }
+
+        // Check usage limit
+        if ($discountCode->usage_limit !== null && $discountCode->used_count >= $discountCode->usage_limit) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Discount code has reached its usage limit.'
+            ], 400);
+        }
+
+        // Check minimum amount if provided in the request
+        if ($discountCode->minimum_amount !== null && $request->has('total_amount') && $request->total_amount < $discountCode->minimum_amount) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Minimum order amount of ' . $discountCode->minimum_amount . ' is required for this discount code.'
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Discount code validated successfully.',
+            'data' => $discountCode
+        ]);
+    }
 }
