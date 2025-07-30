@@ -22,14 +22,16 @@ class OrderController extends Controller
      * Display user's orders.
      */
     public function index(Request $request)
-    {
+    {   
+        $user = auth()->user();
         $orders = Order::with(['items.product.images'])
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->latest()
             ->paginate(10);
 
         return response()->json([
-            'success' => true,
+            'error' => false,
+            'message' => 'Orders retrieved successfully',
             'data' => [
                 'orders' => $orders->items(),
                 'pagination' => [
@@ -47,7 +49,7 @@ class OrderController extends Controller
      */
     public function store(CreateOrderRequest $request)
     {
-        $user = $request->user();
+        $user = auth()->user();
 
         DB::beginTransaction();
 
@@ -101,7 +103,7 @@ class OrderController extends Controller
 
             // Create order
             $order = Order::create([
-                'user_id' => $request->user()->id,
+                'user_id' => $user->id,
                 'order_number' => Order::generateOrderNumber(),
                 'subtotal' => $subtotal,
                 'shipping_amount' => $deliveryCharges,
@@ -274,10 +276,11 @@ class OrderController extends Controller
     /**
      * Display the specified order.
      */
-    public function show($id, Request $request)
+    public function show($id)
     {
+       $user = auth()->user();
         $order = Order::with(['items.product.images', 'items.addons'])
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->find($id);
 
         if (!$order) {
@@ -298,9 +301,10 @@ class OrderController extends Controller
     /**
      * Cancel an order.
      */
-    public function cancel($id, Request $request)
+    public function cancel($id)
     {
-        $order = Order::where('user_id', $request->user()->id)
+        $user = auth()->user();
+        $order = Order::where('user_id', $user->id)
             ->find($id);
 
         if (!$order) {
