@@ -148,7 +148,50 @@ class OrderController extends Controller
                 }
             }
 
-            // Discount code usage is now tracked on the frontend
+
+            // Track discount code usage
+            if ($request->filled('discount_code')) {
+                $discount = DiscountCode::where('code', $request->discount_code)->first();
+                if (!$discount) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'Invalid discount code'
+                    ], 400);
+                }
+                
+                // Check if user has already used this discount code
+                $alreadyUsed = DB::table('discount_code_user')
+                    ->where('discount_code_id', $discount->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
+                
+                if ($alreadyUsed) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'You have already used this discount code.'
+                    ], 400);
+                }
+                
+                // Check if the discount code has reached its usage limit
+                if ($discount->usage_limit !== null && $discount->used_count >= $discount->usage_limit) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'This discount code has reached its maximum usage limit.'
+                    ], 400);
+                }
+                
+                // Increment global usage count
+                $discount->increment('used_count');
+                
+                // Save user usage record
+                DB::table('discount_code_user')->insert([
+                    'discount_code_id' => $discount->id,
+                    'user_id' => $user->id,
+                    'used_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             DB::commit();
 
@@ -368,6 +411,7 @@ class OrderController extends Controller
             'discount_code' => 'required|string|exists:discount_codes,code',
         ]);
 
+        $user = auth()->user();
         $discountCode = DiscountCode::where('code', $request->discount_code)
             ->where('is_active', true)
             ->where(function ($query) {
@@ -400,6 +444,19 @@ class OrderController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => 'Minimum order amount of ' . $discountCode->minimum_amount . ' is required for this discount code.'
+            ], 400);
+        }
+
+        // Check if user has already used this coupon
+        $alreadyUsed = DB::table('discount_code_user')
+            ->where('discount_code_id', $discountCode->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($alreadyUsed) {
+            return response()->json([
+                'error' => true,
+                'message' => 'You have already used this discount code.'
             ], 400);
         }
 
