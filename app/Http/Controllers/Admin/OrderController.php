@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -50,28 +51,46 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, Order $order)
     {
-        $request->validate([
-            'status' => 'required|in:pending,dispatched,rejected,completed,cancelled'
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,dispatched,rejected,completed,cancelled'
         ]);
 
+        \Log::info('Validation successful.', ['validated_data' => $validated]);
+
         try {
-            $order->update([
-                'status' => $request->status,
-                // Update delivered_at timestamp if order is marked as completed
-                'delivered_at' => $request->status === 'completed' ? now() : $order->delivered_at
-            ]);
+            DB::beginTransaction();
+
+            $updateData = ['status' => $validated['status']];
+            
+            if ($validated['status'] === 'completed') {
+                $updateData['delivered_at'] = now();
+            }
+            
+            $order->update($updateData);
+            $order->refresh();
+
+            DB::commit();
+
+            \Log::info('Order status updated successfully in the database.', ['order_id' => $order->id, 'new_status' => $order->status]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order status updated successfully.',
+                'message' => 'Order status updated successfully',
                 'status' => $order->status,
                 'status_label' => ucfirst($order->status)
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating order status: ' . $e->getMessage(), [
+                'order_id' => $order->id,
+                'exception' => $e
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating order status: ' . $e->getMessage()
+                'message' => 'Failed to update order status. Please try again.'
             ], 500);
         }
     }
