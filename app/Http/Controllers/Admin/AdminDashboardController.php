@@ -24,7 +24,7 @@ class AdminDashboardController extends Controller
             'total_categories' => Category::count(),
             'pending_orders' => Order::where('status', 'pending')->count(),
             'confirmed_orders' => Order::where('status', 'confirmed')->count(),
-            'delivered_orders' => Order::where('status', 'delivered')->count(),
+            'completed_orders' => Order::where('status', 'completed')->count(),
             'cancelled_orders' => Order::where('status', 'cancelled')->count(),
             'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
             'today_revenue' => Order::where('payment_status', 'paid')

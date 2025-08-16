@@ -22,7 +22,7 @@ class OrderController extends Controller
      * Display user's orders.
      */
     public function index(Request $request)
-    {   
+    {
         $user = auth()->user();
         $orders = Order::with(['items.product.images'])
             ->where('user_id', $user->id)
@@ -75,7 +75,7 @@ class OrderController extends Controller
                 // Get addon total from request or process addons if not provided
                 $itemAddonTotal = $item['addon_total'] ?? 0;
                 $itemAddons = [];
-                
+
                 // If addon_total is not provided, process addons to get the total
                 if (!isset($item['addon_total'])) {
                     $addonResult = $this->processAddons($item);
@@ -120,12 +120,12 @@ class OrderController extends Controller
             // Create order items
             foreach ($orderItems as $index => $item) {
                 $orderItem = $order->items()->create($item);
-                
+
                 // Save only the addons that were in the original request for this item
                 $requestItem = $request->items[$index] ?? [];
                 $baseFields = ['product_id', 'quantity', 'customizations', 'special_instructions', 'addon_total'];
                 $requestedAddonTypes = array_diff(array_keys($requestItem), $baseFields);
-                
+
                 if (!empty($item['addons'])) {
                     foreach ($item['addons'] as $addon) {
                         // Only save addons that match the requested types in the original request
@@ -158,20 +158,20 @@ class OrderController extends Controller
                         'message' => 'Invalid discount code'
                     ], 400);
                 }
-                
+
                 // Check if user has already used this discount code
                 $alreadyUsed = DB::table('discount_code_user')
                     ->where('discount_code_id', $discount->id)
                     ->where('user_id', $user->id)
                     ->exists();
-                
+
                 if ($alreadyUsed) {
                     return response()->json([
                         'error' => true,
                         'message' => 'You have already used this discount code.'
                     ], 400);
                 }
-                
+
                 // Check if the discount code has reached its usage limit
                 if ($discount->usage_limit !== null && $discount->used_count >= $discount->usage_limit) {
                     return response()->json([
@@ -179,10 +179,10 @@ class OrderController extends Controller
                         'message' => 'This discount code has reached its maximum usage limit.'
                     ], 400);
                 }
-                
+
                 // Increment global usage count
                 $discount->increment('used_count');
-                
+
                 // Save user usage record
                 DB::table('discount_code_user')->insert([
                     'discount_code_id' => $discount->id,
@@ -197,10 +197,10 @@ class OrderController extends Controller
 
             // Eager load all necessary relationships with addon categories
             $order->load([
-                'items' => function($query) {
+                'items' => function ($query) {
                     $query->with([
                         'product.images',
-                        'addons' => function($query) {
+                        'addons' => function ($query) {
                             $query->with(['productAddon.category']);
                         }
                     ]);
@@ -248,27 +248,27 @@ class OrderController extends Controller
                 \Log::debug('Skipping non-array addon type', ['addon_type' => $addonType]);
                 continue;
             }
-            
+
             // Log the addon type being processed
             \Log::debug('Processing addon type', ['addon_type' => $addonType]);
-            
+
             // First try to find by exact slug or name match
             $category = AddonCategory::where('slug', $addonType)
                 ->orWhere('name', $addonType)
                 ->first();
-                
+
             // If not found, try case-insensitive match
             if (!$category) {
                 $category = AddonCategory::whereRaw('LOWER(slug) = ?', [strtolower($addonType)])
                     ->orWhereRaw('LOWER(name) = ?', [strtolower($addonType)])
                     ->first();
             }
-            
+
             // If still not found, try to match with singular/plural forms
             if (!$category) {
                 $singular = Str::singular($addonType);
                 $plural = Str::plural($addonType);
-                
+
                 if ($singular !== $addonType || $plural !== $addonType) {
                     $category = AddonCategory::whereIn('slug', [$singular, $plural])
                         ->orWhereIn('name', [$singular, $plural])
@@ -321,7 +321,7 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-       $user = auth()->user();
+        $user = auth()->user();
         $order = Order::with(['items.product.images', 'items.addons'])
             ->where('user_id', $user->id)
             ->find($id);
@@ -416,11 +416,11 @@ class OrderController extends Controller
             ->where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('starts_at')
-                      ->orWhere('starts_at', '<=', now());
+                    ->orWhere('starts_at', '<=', now());
             })
             ->where(function ($query) {
                 $query->whereNull('expires_at')
-                      ->orWhere('expires_at', '>=', now());
+                    ->orWhere('expires_at', '>=', now());
             })
             ->first();
 

@@ -16,12 +16,9 @@ class Review extends Model
      */
     protected $fillable = [
         'user_id',
-        'product_id',
         'order_id',
         'rating',
-        'title',
         'comment',
-        'status',
     ];
 
     /**
@@ -33,14 +30,6 @@ class Review extends Model
     }
 
     /**
-     * Get the product that was reviewed.
-     */
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    /**
      * Get the order associated with the review.
      */
     public function order()
@@ -49,19 +38,13 @@ class Review extends Model
     }
 
     /**
-     * Scope a query to only include approved reviews.
+     * Get the products from the order that can be reviewed.
      */
-    public function scopeApproved($query)
+    public function products()
     {
-        return $query->where('status', 'approved');
-    }
-
-    /**
-     * Scope a query to only include pending reviews.
-     */
-    public function scopePending($query)
-    {
-        return $query->where('status', 'pending');
+        return $this->order->items->map(function ($item) {
+            return $item->product;
+        });
     }
 
     /**
@@ -70,5 +53,39 @@ class Review extends Model
     public function scopeWithRating($query, $rating)
     {
         return $query->where('rating', $rating);
+    }
+
+    /**
+     * Scope a query to only include reviews for completed orders.
+     */
+    public function scopeForCompletedOrders($query)
+    {
+        return $query->whereHas('order', function ($query) {
+            $query->where('status', 'completed');
+        });
+    }
+
+    /**
+     * Check if this review is for a completed order.
+     */
+    public function isForCompletedOrder()
+    {
+        return $this->order && $this->order->status === 'completed';
+    }
+
+    /**
+     * Get the average rating for a specific order.
+     */
+    public static function getAverageRatingForOrder($orderId)
+    {
+        return static::where('order_id', $orderId)->avg('rating');
+    }
+
+    /**
+     * Get the total number of reviews for a specific order.
+     */
+    public static function getReviewCountForOrder($orderId)
+    {
+        return static::where('order_id', $orderId)->count();
     }
 }

@@ -113,11 +113,11 @@ class Order extends Model
     }
 
     /**
-     * Check if order is delivered.
+     * Check if order is completed.
      */
-    public function isDelivered()
+    public function isCompleted()
     {
-        return $this->status === 'delivered';
+        return $this->status === 'completed';
     }
 
     /**
