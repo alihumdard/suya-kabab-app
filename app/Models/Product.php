@@ -80,11 +80,18 @@ class Product extends Model
     }
 
     /**
-     * Get the product reviews.
+     * Get the product reviews through order items.
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class)->where('status', 'approved');
+        return $this->hasManyThrough(
+            Review::class,
+            OrderItem::class,
+            'product_id', // Foreign key on order_items table
+            'order_id',   // Foreign key on reviews table
+            'id',         // Local key on products table
+            'order_id'    // Local key on order_items table
+        );
     }
 
     /**
@@ -92,7 +99,7 @@ class Product extends Model
      */
     public function approvedReviews()
     {
-        return $this->hasMany(Review::class)->where('status', 'approved');
+        return $this->reviews();
     }
 
     /**
