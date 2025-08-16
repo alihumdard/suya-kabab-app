@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Admin\SettingsController;
 
 /*
@@ -76,11 +77,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('user/favorites', [ProductController::class, 'favorites']);
     Route::patch('products/favorite/{id}', [ProductController::class, 'toggleFavorite']);
 
-
-
+    // Order Routes
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
     Route::post('orders/cancel/{id}', [OrderController::class, 'cancel']);
     Route::post('coupon/validate', [OrderController::class, 'validateCoupon']);
+
+    // Review Routes
+    Route::apiResource('reviews', ReviewController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::get('reviews/reviewable-orders', [ReviewController::class, 'getReviewableOrders']);
+    Route::get('orders/reviews/{orderId}', [ReviewController::class, 'getOrderReviews'])->name('orders.reviews');
 
     // User profile route (alternative)
     Route::get('/user', function (Request $request) {
