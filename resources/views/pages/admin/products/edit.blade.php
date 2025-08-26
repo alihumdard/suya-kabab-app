@@ -6,7 +6,7 @@
     @include('includes.sidebar')
 
     <!-- Page Content -->
-    <div class="flex-1 p-4 sm:p-6 lg:p-10">
+    <div class="flex-1 p-4 sm:p-6 lg:p-10 overflow-y-auto">
         <!-- Topbar -->
         <div
             class="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 sm:px-6 rounded-md shadow-sm mb-6">
@@ -62,9 +62,9 @@
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Left Form -->
-                    <div class="md:col-span-2 space-y-6">
+                    <div class="md:col-span-2 space-y-4">
                         <!-- Category -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
@@ -131,7 +131,7 @@
                         <!-- Price and Status -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Price (₦) *</label>
                                 <input type="number" name="price" step="0.01" placeholder="19.90"
                                     value="{{ old('price', $product->price) }}"
                                     class="w-full px-4 py-3 border rounded-lg @error('price') border-red-500 @enderror"
@@ -175,6 +175,71 @@
                             </label>
                             <p class="text-gray-500 text-sm ml-6">Featured products appear prominently on the homepage
                             </p>
+                        </div>
+
+                        <!-- Product Addons -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Product Addons</label>
+                            <div class="space-y-3">
+                                @foreach($addonCategories as $category)
+                                    <div class="border rounded-lg p-3">
+                                        <h4 class="font-medium text-gray-700 mb-2">{{ $category->name }}</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            @foreach($category->addons as $addon)
+                                                @php
+                                                    $isSelected = $product->addons->contains($addon->id);
+                                                    $pivotData = $product->addons->where('id', $addon->id)->first()?->pivot;
+                                                @endphp
+                                                <div class="flex items-start space-x-2 p-2 border rounded-md hover:bg-gray-50">
+                                                    <input type="checkbox" 
+                                                           name="addons[{{ $addon->id }}][selected]" 
+                                                           value="1" 
+                                                           class="mt-1"
+                                                           {{ $isSelected ? 'checked' : '' }}
+                                                           onchange="toggleAddonConfig({{ $addon->id }})">
+                                                    <div class="flex-1">
+                                                        <div class="flex justify-between items-start">
+                                                            <div>
+                                                                <label class="font-medium text-sm">{{ $addon->name }}</label>
+                                                                <p class="text-xs text-gray-500">₦{{ number_format($addon->price, 2) }}</p>
+                                                                @if($addon->description)
+                                                                    <p class="text-xs text-gray-600 mt-1">{{ $addon->description }}</p>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Addon Configuration -->
+                                                        <div id="addon-config-{{ $addon->id }}" class="mt-2 space-y-2 {{ $isSelected ? '' : 'hidden' }}">
+                                                            <div class="grid grid-cols-2 gap-2">
+                                                                                                                                 <div>
+                                                                     <label class="text-xs block">Min Qty</label>
+                                                                     <input type="number" 
+                                                                            name="addons[{{ $addon->id }}][min_quantity]" 
+                                                                            value="{{ $pivotData ? $pivotData->min_quantity : 0 }}" 
+                                                                            min="0" 
+                                                                            step="1"
+                                                                            class="w-full px-2 py-1 text-xs border rounded addon-number-input">
+                                                                 </div>
+                                                                 <div>
+                                                                     <label class="text-xs block">Max Qty</label>
+                                                                     <input type="number" 
+                                                                            name="addons[{{ $addon->id }}][max_quantity]" 
+                                                                            value="{{ $pivotData ? $pivotData->max_quantity : 3 }}" 
+                                                                            min="1" 
+                                                                            step="1"
+                                                                            class="w-full px-2 py-1 text-xs border rounded addon-number-input">
+                                                                 </div>
+                                                            </div>
+                                                            
+                                                            
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
 
@@ -333,5 +398,100 @@
                 this.classList.remove('border-red-300', 'border-red-500');
             });
         });
+
+        // Addon configuration toggle function
+        window.toggleAddonConfig = function(addonId) {
+            const checkbox = document.querySelector(`input[name="addons[${addonId}][selected]"]`);
+            const configDiv = document.getElementById(`addon-config-${addonId}`);
+            
+            if (!checkbox || !configDiv) return;
+            
+            if (checkbox.checked) {
+                configDiv.classList.remove('hidden');
+            } else {
+                configDiv.classList.add('hidden');
+                // Reset form values when unchecked
+                const inputs = configDiv.querySelectorAll('input');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox') {
+                        input.checked = false;
+                    } else if (input.type === 'number') {
+                        if (input.name.includes('min_quantity')) {
+                            input.value = '0';
+                        } else if (input.name.includes('max_quantity')) {
+                            input.value = '3';
+                        }
+                    }
+                });
+            }
+        };
+
+        // Prevent number input arrows from triggering checkbox change
+        const numberInputs = document.querySelectorAll('.addon-number-input');
+        numberInputs.forEach(input => {
+            let isProcessing = false;
+            
+            // Prevent all events from bubbling up
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('mouseup', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('keydown', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('change', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Prevent rapid changes
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                setTimeout(() => {
+                    isProcessing = false;
+                }, 100);
+            }, true);
+            
+            // Prevent wheel events on number inputs
+            input.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+            
+            // Prevent touch events on mobile
+            input.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('touchend', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+        });
+        
+        // Additional protection for the entire form
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('click', function(e) {
+                if (e.target.type === 'number') {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+            }, true);
+        }
     });
 </script>

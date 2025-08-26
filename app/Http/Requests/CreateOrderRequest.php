@@ -19,7 +19,7 @@ class CreateOrderRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -32,7 +32,7 @@ class CreateOrderRequest extends FormRequest
                     $addonFields = array_diff(array_keys($value), $baseFields);
 
                     foreach ($addonFields as $addonType) {
-                        // Each addon type should be an array of objects with 'id'
+                        // Each addon type should be an array of objects with 'id' and 'quantity'
                         if (!is_array($value[$addonType])) {
                             $fail("The $addonType must be an array of add-ons.");
                             continue;
@@ -41,6 +41,16 @@ class CreateOrderRequest extends FormRequest
                         foreach ($value[$addonType] as $index => $addon) {
                             if (!isset($addon['id'])) {
                                 $fail("Each item in $addonType must have an 'id' field.");
+                                continue;
+                            }
+
+                            if (!isset($addon['quantity'])) {
+                                $fail("Each item in $addonType must have a 'quantity' field.");
+                                continue;
+                            }
+
+                            if (!is_numeric($addon['quantity']) || $addon['quantity'] < 1) {
+                                $fail("Quantity for item in $addonType at index $index must be a positive number.");
                                 continue;
                             }
 
@@ -62,8 +72,28 @@ class CreateOrderRequest extends FormRequest
             'delivery_instructions' => 'nullable|string',
             'discount_code' => 'nullable|string',
             'total_amount' => 'required|numeric',
-            'payment_method' => 'required|string',
+            'payment_method' => 'nullable|string|in:card,cash,cod,flutterwave',
         ];
+
+        // Add card payment validation rules if payment method is card
+        if ($this->input('payment_method') === 'card') {
+            $rules['payment_method'] = 'required|string|in:card,cash,cod,flutterwave';
+            $rules['card_details'] = 'required|array';
+            $rules['card_details.card_number'] = 'required|string|min:13|max:19';
+            $rules['card_details.cvv'] = 'required|string|min:3|max:4';
+            $rules['card_details.expiry_month'] = 'required|string|size:2|in:01,02,03,04,05,06,07,08,09,10,11,12';
+            $rules['card_details.expiry_year'] = ['required', 'string', 'size:2', function ($attribute, $value, $fail) {
+                if (!ctype_digit($value)) {
+                    $fail('The expiry year must contain only digits.');
+                }
+            }];
+            $rules['card_details.card_holder_name'] = 'required|string|max:255';
+        } else {
+            // For other payment methods, payment_method is optional and defaults to COD
+            $rules['payment_method'] = 'nullable|string|in:card,cash,cod,flutterwave';
+        }
+
+        return $rules;
     }
 
     /**
@@ -82,6 +112,20 @@ class CreateOrderRequest extends FormRequest
             'delivery_method.in' => 'Delivery method must be either pickup or delivery.',
             'delivery_address.required_if' => 'Delivery address is required when delivery method is delivery.',
             'delivery_phone.required' => 'Delivery phone is required.',
+            'card_details.required' => 'Card details are required for card payments.',
+            'card_details.card_number.required' => 'Card number is required.',
+            'card_details.card_number.min' => 'Card number must be at least 13 digits.',
+            'card_details.card_number.max' => 'Card number must not exceed 19 digits.',
+            'card_details.cvv.required' => 'CVV is required.',
+            'card_details.cvv.min' => 'CVV must be at least 3 digits.',
+            'card_details.cvv.max' => 'CVV must not exceed 4 digits.',
+            'card_details.expiry_month.required' => 'Card expiry month is required.',
+            'card_details.expiry_month.in' => 'Card expiry month must be between 01 and 12.',
+            'card_details.expiry_month.size' => 'Card expiry month must be 2 digits (e.g., 09).',
+            'card_details.expiry_year.required' => 'Card expiry year is required.',
+            'card_details.expiry_year.size' => 'Card expiry year must be 2 digits (e.g., 25).',
+            'card_details.card_holder_name.required' => 'Card holder name is required.',
+            'card_details.card_holder_name.max' => 'Card holder name must not exceed 255 characters.',
         ];
     }
 }

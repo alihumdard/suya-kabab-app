@@ -87,7 +87,7 @@
                 <div class="p-4">
                     <h3 class="font-semibold text-gray-800 text-base truncate">Special Kebab</h3>
                     <p class="text-sm text-[#E73C36]">Chicken</p>
-                    <p class="text-base font-bold text-[#E73C36] mt-1">$18.00</p>
+                    <p class="text-base font-bold text-[#E73C36] mt-1">₦18.00</p>
                 </div>
         </div>
         @endfor
@@ -122,11 +122,11 @@
 
                     <div class="flex gap-4">
                         <div class="w-1/2">
-                            <label class="block text-sm font-medium">Price ($)</label>
+                            <label class="block text-sm font-medium">Price (₦)</label>
                             <input type="text" placeholder="19.90" class="w-full mt-1 px-4 py-2 border rounded-md" />
                         </div>
                         <div class="w-1/2">
-                            <label class="block text-sm font-medium">Discount Price ($)</label>
+                            <label class="block text-sm font-medium">Discount Price (₦)</label>
                             <input type="text" placeholder="17.90" class="w-full mt-1 px-4 py-2 border rounded-md" />
                         </div>
                     </div>

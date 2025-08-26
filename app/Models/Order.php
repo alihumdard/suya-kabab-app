@@ -81,6 +81,30 @@ class Order extends Model
     }
 
     /**
+     * Get the payments for this order.
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the refunds for this order.
+     */
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class);
+    }
+
+    /**
+     * Get the latest payment for this order.
+     */
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latest();
+    }
+
+    /**
      * Scope a query to only include orders with specific status.
      */
     public function scopeWithStatus($query, $status)
@@ -109,7 +133,7 @@ class Order extends Model
      */
     public function canBeCancelled()
     {
-        return in_array($this->status, ['pending', 'confirmed']);
+        return in_array($this->status, ['pending']);
     }
 
     /**

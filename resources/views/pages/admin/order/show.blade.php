@@ -46,46 +46,37 @@
                             <p class="mt-1">{{ $order->created_at->format('M d, Y h:i A') }}</p>
                         </div>
                         <div>
-                            <h3 class="text-sm font-medium text-gray-500">Status</h3>
-                            @php
-$statusClasses = [
-    'pending' => 'bg-yellow-100 text-yellow-800',
-    'dispatched' => 'bg-blue-100 text-blue-800',
-    'rejected' => 'bg-red-100 text-red-800',
-    'completed' => 'bg-green-100 text-green-800',
-    'cancelled' => 'bg-red-100 text-red-800',
-][$order->status] ?? 'bg-gray-100 text-gray-800';
-                            @endphp
-                            <div class="relative inline-block text-left" x-data="{ open: false, status: '{{ $order->status }}', loading: false }" @status-updated.window="status = $event.detail.status" @click.away="open = false">
-                                <div>
-                                    <button type="button" @click="open = !open" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md focus:outline-none transition ease-in-out duration-150" :class="{
-                                        'bg-yellow-100 text-yellow-800': status === 'pending',
-                                                                                'bg-blue-100 text-blue-800': status === 'dispatched',
-                                        'bg-red-100 text-red-800': status === 'rejected' || status === 'cancelled',
-                                        'bg-green-100 text-green-800': status === 'completed',
-                                        'bg-gray-100 text-gray-800': !['pending', 'dispatched', 'rejected', 'completed', 'cancelled'].includes(status)
-                                    }" :disabled="loading">
-                                        <span x-text="status.charAt(0).toUpperCase() + status.slice(1)"></span>
-                                        <svg class="ml-2 -mr-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-                                    <div class="py-1" role="none">
-                                        <button @click="status = 'pending'" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">Pending</button>
-                                        <button @click="status = 'dispatched'" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">Dispatch</button>
-                                        <button @click="status = 'rejected'" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-2">Rejected</button>
-                                        <button @click="status = 'completed'" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-3">Completed</button>
-                                        <button @click="status = 'cancelled'" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600" role="menuitem" tabindex="-1" id="menu-item-4">Cancelled</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
                             <h3 class="text-sm font-medium text-gray-500">Payment Method</h3>
                             <p class="mt-1">{{ ucfirst($order->payment_method ?? 'N/A') }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Order Status</h3>
+                            @php
+                                $statusClasses = [
+                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                    'dispatched' => 'bg-blue-100 text-blue-800',
+                                    'rejected' => 'bg-red-100 text-red-800',
+                                    'completed' => 'bg-green-100 text-green-800',
+                                    'cancelled' => 'bg-red-100 text-red-800',
+                                ][$order->status] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $statusClasses }} mt-1">
+                                {{ ucfirst($order->status) }}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Payment Status</h3>
+                            @php
+                                $paymentStatusClasses = [
+                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                    'paid' => 'bg-green-100 text-green-800',
+                                    'failed' => 'bg-red-100 text-red-800',
+                                    'refunded' => 'bg-gray-100 text-gray-800',
+                                ][$order->payment_status] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $paymentStatusClasses }} mt-1">
+                                {{ ucfirst($order->payment_status) }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -114,7 +105,7 @@ $statusClasses = [
                                                         <div class="text-xs text-gray-500 mt-1">
                                                             @foreach($item->addons as $addon)
                                                                 <span class="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs text-gray-700 mr-1 mb-1">
-                                                                    {{ $addon->name }} (+${{ number_format($addon->price, 2) }})
+                                                                    {{ $addon->name }} (+₦{{ number_format($addon->price, 2) }})
                                                                 </span>
                                                             @endforeach
                                                         </div>
@@ -128,13 +119,13 @@ $statusClasses = [
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                            ${{ number_format($item->price, 2) }}
+                                            ₦{{ number_format($item->price, 2) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                                             {{ $item->quantity }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            ${{ number_format($item->price * $item->quantity, 2) }}
+                                            ₦{{ number_format($item->price * $item->quantity, 2) }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -149,24 +140,24 @@ $statusClasses = [
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
                     <div class="space-y-3">
-                        <div class="flex justify-between">
+                                                <div class="flex justify-between">
                             <span class="text-gray-600">Subtotal</span>
-                            <span>${{ number_format($order->subtotal, 2) }}</span>
+                            <span>₦{{ number_format($order->subtotal, 2) }}</span>
                         </div>
                         @if($order->discount_amount > 0)
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Discount</span>
-                                <span class="text-red-500">-${{ number_format($order->discount_amount, 2) }}</span>
+                                <span class="text-red-500">-₦{{ number_format($order->discount_amount, 2) }}</span>
                             </div>
                         @endif
                         <div class="flex justify-between">
                             <span class="text-gray-600">Shipping</span>
-                            <span>${{ number_format($order->shipping_amount, 2) }}</span>
+                            <span>₦{{ number_format($order->shipping_amount, 2) }}</span>
                         </div>
                         <div class="border-t border-gray-200 pt-3 mt-3">
                             <div class="flex justify-between font-semibold text-lg">
                                 <span>Total</span>
-                                <span>${{ number_format($order->total_amount, 2) }}</span>
+                                <span>₦{{ number_format($order->total_amount, 2) }}</span>
                             </div>
                         </div>
                     </div>

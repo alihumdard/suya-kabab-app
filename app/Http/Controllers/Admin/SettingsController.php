@@ -22,6 +22,8 @@ class SettingsController extends Controller
                 return 'Contact Information';
             } elseif (in_array($setting->key, ['delivery_time_estimate', 'pickup_time_estimate'])) {
                 return 'Time Estimates';
+            } elseif (in_array($setting->key, ['flutterwave_enabled', 'flutterwave_public_key', 'flutterwave_secret_key', 'flutterwave_environment'])) {
+                return 'Payment Settings';
             } else {
                 return 'General';
             }
@@ -187,6 +189,72 @@ class SettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update delivery settings'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get payment settings for API.
+     */
+    public function getPaymentSettings()
+    {
+        $settings = [
+            'flutterwave_enabled' => Setting::get('flutterwave_enabled', false),
+            'flutterwave_environment' => Setting::get('flutterwave_environment', 'test'),
+            'available_payment_methods' => [
+                [
+                    'id' => 'flutterwave',
+                    'name' => 'Flutterwave',
+                    'description' => 'Pay with card, bank transfer, USSD, or mobile money',
+                    'enabled' => Setting::get('flutterwave_enabled', false),
+                ],
+                [
+                    'id' => 'cash',
+                    'name' => 'Cash on Delivery',
+                    'description' => 'Pay with cash when your order is delivered',
+                    'enabled' => true,
+                ],
+            ],
+        ];
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Payment settings retrieved successfully',
+            'data' => $settings
+        ]);
+    }
+
+    /**
+     * Update payment settings.
+     */
+    public function updatePaymentSettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'flutterwave_enabled' => 'boolean',
+            'flutterwave_environment' => 'in:test,live',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 403);
+        }
+
+        try {
+            Setting::set('flutterwave_enabled', $request->flutterwave_enabled ?? false, 'boolean');
+            Setting::set('flutterwave_environment', $request->flutterwave_environment ?? 'test', 'string');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment settings updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update payment settings'
             ], 500);
         }
     }

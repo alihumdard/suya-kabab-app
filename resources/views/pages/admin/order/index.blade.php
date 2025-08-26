@@ -151,6 +151,21 @@
                         <i class="fas fa-chevron-down text-gray-400"></i>
                     </div>
                 </div>
+
+                <!-- Payment Status Filter -->
+                <div class="relative w-full sm:w-40">
+                    <select
+                        class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E73C36] focus:border-transparent bg-white">
+                        <option value="">Payment Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                        <option value="refunded">Refunded</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                </div>
             </div>
 
             <!-- Date Range Picker -->
@@ -195,6 +210,7 @@
                             <th class="px-4 py-3 text-left font-medium">Date</th>
                             <th class="px-4 py-3 text-left font-medium">Total</th>
                             <th class="px-4 py-3 text-left font-medium">Status</th>
+                            <th class="px-4 py-3 text-left font-medium">Payment Status</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -207,7 +223,7 @@
                                     <div class="text-gray-500 text-xs">{{ $order->user->email ?? 'N/A' }}</div>
                                 </td>
                                 <td class="px-4 py-3">{{ $order->created_at->format('M d, Y') }}</td>
-                                <td class="px-4 py-3">${{ number_format($order->total_amount, 2) }}</td>
+                                <td class="px-4 py-3">₦{{ number_format($order->total_amount, 2) }}</td>
                                 <td class="px-4 py-3">
                                     @php
                                         $statusClasses = [
@@ -220,6 +236,19 @@
                                     @endphp
                                     <span class="px-2 py-1 text-xs font-medium rounded-full {{ $statusClasses }}">
                                         {{ ucfirst($order->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        $paymentStatusClasses = [
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'paid' => 'bg-green-100 text-green-800',
+                                            'failed' => 'bg-red-100 text-red-800',
+                                            'refunded' => 'bg-gray-100 text-gray-800',
+                                        ][$order->payment_status] ?? 'bg-gray-100 text-gray-800';
+                                    @endphp
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $paymentStatusClasses }}">
+                                        {{ ucfirst($order->payment_status) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
@@ -237,7 +266,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-8 text-center">
+                                <td colspan="7" class="px-4 py-8 text-center">
                                     <div class="text-gray-400">
                                         <i class="fas fa-shopping-cart text-4xl mb-4"></i>
                                         <p class="text-lg">No orders found</p>

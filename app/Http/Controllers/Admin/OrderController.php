@@ -56,7 +56,6 @@ class OrderController extends Controller
             'status' => 'required|string|in:pending,dispatched,rejected,completed,cancelled'
         ]);
 
-        \Log::info('Validation successful.', ['validated_data' => $validated]);
 
         try {
             DB::beginTransaction();
@@ -71,8 +70,6 @@ class OrderController extends Controller
             $order->refresh();
 
             DB::commit();
-
-            \Log::info('Order status updated successfully in the database.', ['order_id' => $order->id, 'new_status' => $order->status]);
 
             return response()->json([
                 'success' => true,
