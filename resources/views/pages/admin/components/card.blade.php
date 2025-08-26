@@ -18,7 +18,7 @@
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 text-base truncate">Special Kebab</h3>
                         <p class="text-sm text-[#E73C36]">Chicken</p>
-                        <p class="text-base font-bold text-[#E73C36] mt-1">$18.00</p>
+                        <p class="text-base font-bold text-[#E73C36] mt-1">₦18.00</p>
                     </div>
                 </div>
             @endfor

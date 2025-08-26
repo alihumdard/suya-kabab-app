@@ -32,8 +32,10 @@ class StoreProductRequest extends FormRequest
             'quantity' => 'nullable|integer|min:0',
             'track_quantity' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'item_tags' => 'nullable|array',
-            'item_tags.*' => 'string|max:50',
+            'addons' => 'nullable|array',
+            'addons.*.selected' => 'boolean',
+            'addons.*.min_quantity' => 'integer|min:0',
+            'addons.*.max_quantity' => 'integer|min:1',
         ];
     }
 
@@ -75,7 +77,6 @@ class StoreProductRequest extends FormRequest
             'category_id' => 'category',
             'short_description' => 'short description',
             'track_quantity' => 'track quantity',
-            'item_tags' => 'item tags',
         ];
     }
 }

@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Image;
+use App\Models\ProductAddon;
+use App\Models\AddonCategory;
 use App\Helpers\ImageHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -60,8 +63,9 @@ class ProductController extends Controller
 
         $products = $query->paginate(12)->appends(request()->query());
         $categories = Category::active()->orderBy('name')->get();
+        $addonCategories = AddonCategory::active()->with('addons')->orderBy('name')->get();
 
-        return view('pages.admin.products.index', compact('products', 'categories'));
+        return view('pages.admin.products.index', compact('products', 'categories', 'addonCategories'));
     }
 
     /**
@@ -123,6 +127,27 @@ class ProductController extends Controller
             }
         }
 
+        // Handle addon relationships
+        if ($request->has('addons') && is_array($request->addons)) {
+            $pivotData = [];
+            foreach ($request->addons as $addonId => $addonConfig) {
+                if (isset($addonConfig['selected']) && $addonConfig['selected']) {
+                    $pivotData[] = [
+                        'product_id' => $product->id,
+                        'product_addon_id' => $addonId,
+                        'min_quantity' => isset($addonConfig['min_quantity']) ? (int) $addonConfig['min_quantity'] : 0,
+                        'max_quantity' => isset($addonConfig['max_quantity']) ? (int) $addonConfig['max_quantity'] : 3,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            if (!empty($pivotData)) {
+                DB::table('product_addon_pivot')->insert($pivotData);
+            }
+        }
+
         return redirect()->route('admin.products.index')
             ->with('success', 'Product created successfully!');
     }
@@ -133,8 +158,10 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $categories = Category::active()->orderBy('name')->get();
+        $addonCategories = AddonCategory::active()->with('addons')->orderBy('name')->get();
+        $product->load('addons'); // Load existing addons
 
-        return view('pages.admin.products.edit', compact('product', 'categories'));
+        return view('pages.admin.products.edit', compact('product', 'categories', 'addonCategories'));
     }
 
     /**
@@ -206,6 +233,31 @@ class ProductController extends Controller
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Failed to upload image. Please try again.');
+            }
+        }
+
+        // Handle addon relationships
+        if ($request->has('addons') && is_array($request->addons)) {
+            // First, remove all existing addon relationships
+            $product->addons()->detach();
+
+            // Then add the new ones
+            $pivotData = [];
+            foreach ($request->addons as $addonId => $addonConfig) {
+                if (isset($addonConfig['selected']) && $addonConfig['selected']) {
+                    $pivotData[] = [
+                        'product_id' => $product->id,
+                        'product_addon_id' => $addonId,
+                        'min_quantity' => isset($addonConfig['min_quantity']) ? (int) $addonConfig['min_quantity'] : 0,
+                        'max_quantity' => isset($addonConfig['max_quantity']) ? (int) $addonConfig['max_quantity'] : 3,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            if (!empty($pivotData)) {
+                DB::table('product_addon_pivot')->insert($pivotData);
             }
         }
 

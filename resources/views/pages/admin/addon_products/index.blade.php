@@ -238,7 +238,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                <span class="font-semibold text-green-600">${{ number_format($addon->price, 2) }}</span>
+                                <span class="font-semibold text-green-600">₦{{ number_format($addon->price, 2) }}</span>
                             </td>
                             <td class="px-4 py-3">
                                 <span

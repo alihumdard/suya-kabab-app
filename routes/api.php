@@ -6,10 +6,17 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Api\RefundController;
+
+// Include webhook testing routes (remove in production)
+// if (config('app.debug')) {
+//     require __DIR__ . '/api_webhook_test.php';
+// }
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +74,12 @@ Route::get('promotions/active/list', [PromotionController::class, 'active']);
 
 // App Settings
 Route::get('settings/delivery', [SettingsController::class, 'getDeliverySettings']);
+Route::get('settings/payment', [SettingsController::class, 'getPaymentSettings']);
+
+// Public Payment Routes (no authentication required)
+Route::prefix('payments')->group(function () {
+    Route::post('webhook', [PaymentController::class, 'webhook']);
+});
 
 // Protected API Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -81,6 +94,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
     Route::post('orders/cancel/{id}', [OrderController::class, 'cancel']);
     Route::post('coupon/validate', [OrderController::class, 'validateCoupon']);
+
+    // Payment Routes
+    Route::prefix('payments')->group(function () {
+        Route::post('complete', [PaymentController::class, 'completeCardPayment']); // Unified payment completion
+        Route::post('verify', [PaymentController::class, 'verifyPayment']); // Unified verification
+        Route::post('check-reference', [PaymentController::class, 'checkPaymentReference']); // Check payment reference validity
+        Route::get('status/{order_id}', [PaymentController::class, 'getPaymentStatus']);
+        Route::post('refund', [PaymentController::class, 'refund']);
+    });
+
+    // Refund Routes
+    Route::prefix('refunds')->group(function () {
+        Route::post('request', [RefundController::class, 'requestRefund']);
+        Route::get('status/{refund_id}', [RefundController::class, 'getRefundStatus']);
+        Route::get('user', [RefundController::class, 'getUserRefunds']);
+        Route::get('order/{order_id}', [RefundController::class, 'getOrderRefunds']);
+        Route::post('cancel/{refund_id}', [RefundController::class, 'cancelRefund']);
+    });
 
     // Review Routes
     Route::apiResource('reviews', ReviewController::class)->only(['index', 'store', 'show', 'update', 'destroy']);

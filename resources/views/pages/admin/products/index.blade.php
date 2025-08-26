@@ -268,7 +268,7 @@
                     <div class="p-4">
                         <h3 class="font-semibold text-gray-800 text-base truncate">{{ $product->name }}</h3>
                         <p class="text-sm text-[#E73C36]">{{ $product->category->name }}</p>
-                        <p class="text-base font-bold text-[#E73C36] mt-1">${{ number_format($product->price, 2) }}</p>
+                        <p class="text-base font-bold text-[#E73C36] mt-1">₦{{ number_format($product->price, 2) }}</p>
                         <div class="flex justify-between items-center mt-2">
                             <span
                                 class="inline-block px-2 py-1 text-xs rounded-full {{ $product->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
@@ -302,9 +302,10 @@
 
         <!-- Modal -->
         <div x-show="showModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto"
-            style="padding-top: 300px;">
-            <div class="bg-white w-full max-w-5xl mx-4 p-6 rounded-lg relative" @click.away="showModal = false">
+            class="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto p-4"
+            x-cloak
+            x-init="$watch('showModal', value => { document.body.style.overflow = value ? 'hidden' : 'auto' })">
+            <div class="bg-white w-full max-w-5xl mx-auto my-8 p-6 rounded-lg relative max-h-[90vh] overflow-y-auto" @click.away="showModal = false">
                 <!-- Close Button -->
                 <button @click="showModal = false" class="absolute top-3 right-3 text-red-500 text-xl">
                     &times;
@@ -316,7 +317,7 @@
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <!-- Left Form -->
-                        <div class="md:col-span-2 space-y-4">
+                        <div class="md:col-span-2 space-y-3">
                             <!-- Category -->
                             <div>
                                 <label class="block text-sm font-medium">Category *</label>
@@ -379,7 +380,7 @@
                             <!-- Price and Status -->
                             <div class="flex gap-4">
                                 <div class="w-1/2">
-                                    <label class="block text-sm font-medium">Price ($) *</label>
+                                    <label class="block text-sm font-medium">Price (₦) *</label>
                                     <input type="number" name="price" step="0.01" placeholder="19.90"
                                         value="{{ old('price') }}"
                                         class="w-full mt-1 px-4 py-2 border rounded-md @error('price') border-red-500 @enderror"
@@ -406,27 +407,67 @@
 
 
 
+                            <!-- Product Addons -->
                             <div>
-                                <label class="block text-sm font-medium mb-1">Item Tags</label>
-                                <div class="flex flex-wrap gap-4">
-                                    <label><input type="checkbox" class="mr-2">Lamb</label>
-                                    <label><input type="checkbox" class="mr-2">Spicy</label>
-                                    <label><input type="checkbox" class="mr-2">Vegan</label>
-                                    <label><input type="checkbox" class="mr-2">Vegetarian</label>
+                                <label class="block text-sm font-medium mb-2">Product Addons</label>
+                                <div class="space-y-3">
+                                    @foreach($addonCategories as $category)
+                                        <div class="border rounded-lg p-3">
+                                            <h4 class="font-medium text-gray-700 mb-2">{{ $category->name }}</h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                @foreach($category->addons as $addon)
+                                                    <div class="flex items-start space-x-2 p-2 border rounded-md hover:bg-gray-50">
+                                                        <input type="checkbox" 
+                                                               name="addons[{{ $addon->id }}][selected]" 
+                                                               value="1" 
+                                                               class="mt-1"
+                                                               onchange="toggleAddonConfig({{ $addon->id }})">
+                                                        <div class="flex-1">
+                                                            <div class="flex justify-between items-start">
+                                                                <div>
+                                                                    <label class="font-medium text-sm">{{ $addon->name }}</label>
+                                                                    <p class="text-xs text-gray-500">₦{{ number_format($addon->price, 2) }}</p>
+                                                                    @if($addon->description)
+                                                                        <p class="text-xs text-gray-600 mt-1">{{ $addon->description }}</p>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Addon Configuration (hidden by default) -->
+                                                            <div id="addon-config-{{ $addon->id }}" class="mt-2 space-y-2 hidden">
+                                                                <div class="grid grid-cols-2 gap-2">
+                                                                    <div>
+                                                                        <label class="text-xs block">Min Qty</label>
+                                                                        <input type="number" 
+                                                                               name="addons[{{ $addon->id }}][min_quantity]" 
+                                                                               value="0" 
+                                                                               min="0" 
+                                                                               step="1"
+                                                                               class="w-full px-2 py-1 text-xs border rounded addon-number-input">
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="text-xs block">Max Qty</label>
+                                                                        <input type="number" 
+                                                                               name="addons[{{ $addon->id }}][max_quantity]" 
+                                                                               value="3" 
+                                                                               min="1" 
+                                                                               step="1"
+                                                                               class="w-full px-2 py-1 text-xs border rounded addon-number-input">
+                                                                    </div>
+                                                                </div>
+                                                                
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Promotion Badges</label>
-                                <div class="flex flex-wrap gap-3">
-                                    <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm">Best
-                                        Seller</span>
-                                    <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm">New
-                                        Added</span>
-                                    <span
-                                        class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm">Popular</span>
-                                </div>
-                            </div>
+
                         </div>
 
                         <!-- Right Image Upload -->
@@ -458,7 +499,7 @@
                     </div>
 
                     <!-- Form Actions -->
-                    <div class="mt-6 flex justify-between">
+                    <div class="mt-4 flex justify-between sticky bottom-0 bg-white pt-4 border-t">
                         <button type="button" @click="showModal = false"
                             class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600">Cancel</button>
                         <button type="submit"
@@ -483,3 +524,130 @@
     </div>
 </div>
 </div>
+
+<script>
+    function toggleAddonConfig(addonId) {
+        const checkbox = document.querySelector(`input[name="addons[${addonId}][selected]"]`);
+        const configDiv = document.getElementById(`addon-config-${addonId}`);
+        
+        if (!checkbox || !configDiv) return;
+        
+        if (checkbox.checked) {
+            configDiv.classList.remove('hidden');
+        } else {
+            configDiv.classList.add('hidden');
+            // Reset form values when unchecked
+            const inputs = configDiv.querySelectorAll('input');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else if (input.type === 'number') {
+                    if (input.name.includes('min_quantity')) {
+                        input.value = '0';
+                    } else if (input.name.includes('max_quantity')) {
+                        input.value = '3';
+                    }
+                }
+            });
+        }
+    }
+
+    // Handle modal body overflow
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.querySelector('[x-show="showModal"]');
+        const showModalButton = document.querySelector('[@click="showModal = true"]');
+        const closeModalButton = document.querySelector('[@click="showModal = false"]');
+        
+        if (showModalButton) {
+            showModalButton.addEventListener('click', function() {
+                document.body.style.overflow = 'hidden';
+            });
+        }
+        
+        if (closeModalButton) {
+            closeModalButton.addEventListener('click', function() {
+                document.body.style.overflow = 'auto';
+            });
+        }
+        
+        // Also handle escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && window.showModal) {
+                document.body.style.overflow = 'auto';
+            }
+        });
+    });
+</script>
+
+<script>
+    // Prevent number input arrows from triggering checkbox change
+    document.addEventListener('DOMContentLoaded', function() {
+        const numberInputs = document.querySelectorAll('.addon-number-input');
+        numberInputs.forEach(input => {
+            let isProcessing = false;
+            
+            // Prevent all events from bubbling up
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('mouseup', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('keydown', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('change', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Prevent rapid changes
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                setTimeout(() => {
+                    isProcessing = false;
+                }, 100);
+            }, true);
+            
+            // Prevent wheel events on number inputs
+            input.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
+            
+            // Prevent touch events on mobile
+            input.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+            
+            input.addEventListener('touchend', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }, true);
+        });
+        
+        // Additional protection for the entire form
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('click', function(e) {
+                if (e.target.type === 'number') {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+            }, true);
+        }
+    });
+</script>
+</script>

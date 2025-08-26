@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'flutterwave' => [
+        'public_key' => env('FLUTTERWAVE_PUBLIC_KEY'),
+        'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
+        'secret_hash' => env('FLUTTERWAVE_SECRET_HASH'),
+        'encryption_key' => env('FLUTTERWAVE_ENCRYPTION_KEY'),
+        'environment' => env('FLUTTERWAVE_ENVIRONMENT', 'test'), // test or live
+        'verify_ssl' => env('FLUTTERWAVE_VERIFY_SSL', false), // Set to true in production
+    ],
+
 ];
