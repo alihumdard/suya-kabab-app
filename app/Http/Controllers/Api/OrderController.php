@@ -102,19 +102,13 @@ class OrderController extends Controller
                             2 // expires in 2 hours
                         );
 
-                        Log::info('Pending order created for payment verification', [
-                            'reference' => $paymentReference,
-                            'pending_order_id' => $pendingOrder->id,
-                            'user_id' => $user->id,
-                            'expires_at' => $pendingOrder->expires_at
-                        ]);
                     }
 
                     return response()->json([
                         'error' => true,
                         'message' => $paymentResult['message'],
                         'payment_details' => $paymentResult['data'] ?? null
-                    ], 400);
+                    ], 401);
                 } else {
                     // Payment failed - return error
                     return response()->json([
