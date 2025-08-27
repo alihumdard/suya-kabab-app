@@ -19,12 +19,7 @@ class UserOtpVerification extends Notification
 
     public function toMail($notifiable): MailMessage
     {
-        \Log::info('Sending OTP verification email', [
-            'email' => $this->email,
-            'type' => $this->type,
-            'name' => $this->name,
-            'otp' => $this->otp,
-        ]);
+
         return (new MailMessage)
             ->subject('Suyakabab Account Verification')
             ->view('emails.otp_verification', [

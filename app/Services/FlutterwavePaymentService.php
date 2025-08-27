@@ -263,16 +263,6 @@ class FlutterwavePaymentService
 
             $result = json_decode($response->getBody(), true);
 
-            Log::info('Flutterwave PIN verification response', [
-                'tx_ref' => $cardData['tx_ref'],
-                'status' => $result['status'] ?? 'unknown',
-                'message' => $result['message'] ?? 'no message',
-                'flw_ref' => $result['flw_ref'] ?? 'not_found',
-                'transaction_id' => $result['data']['id'] ?? 'not_found',
-                'full_result_keys' => array_keys($result),
-                'full_data_keys' => array_keys($result['data'] ?? [])
-            ]);
-
             // After PIN, Flutterwave might request OTP or return auth_url for 3DS
             if (isset($result['meta']['authorization'])) {
                 $transactionId = $result['data']['id'] ?? $result['data']['tx_ref'] ?? null;
@@ -376,11 +366,7 @@ class FlutterwavePaymentService
 
             $result = json_decode($response->getBody(), true);
 
-            Log::info('Flutterwave OTP validation response', [
-                'flw_ref' => $flwRef,
-                'status' => $result['status'] ?? 'unknown',
-                'message' => $result['message'] ?? 'no message'
-            ]);
+
 
             // Check if validation was successful
             if (isset($result['status']) && $result['status'] === 'success') {
@@ -444,19 +430,12 @@ class FlutterwavePaymentService
         try {
             $secretKey = config('services.flutterwave.secret_key');
 
-            Log::info('Verifying transaction', [
-                'transaction_id' => $transactionId,
-                'secret_key_exists' => !empty($secretKey)
-            ]);
-
             $client = new Client([
                 'timeout' => 30,
                 'verify' => false
             ]);
 
             $url = "https://api.flutterwave.com/v3/transactions/{$transactionId}/verify";
-
-            Log::info('Making verification request', ['url' => $url]);
 
             $response = $client->get($url, [
                 'headers' => [
@@ -465,13 +444,6 @@ class FlutterwavePaymentService
             ]);
 
             $result = json_decode($response->getBody(), true);
-
-            Log::info('Flutterwave verification response', [
-                'transaction_id' => $transactionId,
-                'status' => $result['status'] ?? 'unknown',
-                'message' => $result['message'] ?? 'no message',
-                'data' => $result['data'] ?? null
-            ]);
 
             return $result;
         } catch (\Exception $e) {
@@ -573,11 +545,22 @@ class FlutterwavePaymentService
         try {
             $payment = Payment::findOrFail($paymentId);
             $secretKey = config('services.flutterwave.secret_key');
+            $transactionId = $payment->transaction_id;
+
+            if (empty($transactionId)) {
+                Log::error('Payment transaction_id is empty', [
+                    'payment_id' => $payment->id,
+                    'payment_data' => $payment->toArray()
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'Payment transaction ID not found - cannot process refund'
+                ];
+            }
 
             $refundData = [
-                'id' => $payment->transaction_id,
                 'amount' => $amount ?? $payment->amount,
-                'reason' => $reason
+                'comment' => $reason
             ];
 
             $client = new Client([
@@ -585,7 +568,7 @@ class FlutterwavePaymentService
                 'verify' => false
             ]);
 
-            $response = $client->post('https://api.flutterwave.com/v3/refunds', [
+            $response = $client->post("https://api.flutterwave.com/v3/transactions/{$transactionId}/refund", [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $secretKey,
                     'Content-Type' => 'application/json',
@@ -598,13 +581,24 @@ class FlutterwavePaymentService
             if (isset($result['status']) && $result['status'] === 'success') {
                 // Create refund record
                 $refund = Refund::create([
+                    'user_id' => $payment->user_id,
                     'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
                     'amount' => $amount ?? $payment->amount,
+                    'currency' => $payment->currency ?? 'NGN',
                     'reason' => $reason,
-                    'status' => 'pending',
-                    'reference' => $result['data']['id'] ?? null,
-                    'gateway_response' => json_encode($result)
+                    'status' => 'processing', // Start as processing, webhook will update to successful/failed
+                    'reference' => 'REFUND_' . time() . '_' . $payment->id,
+                    'transaction_id' => $result['data']['id'] ?? $result['data']['refund_id'] ?? null,
+                    'gateway_response' => $result['message'] ?? 'Refund initiated',
+                    'gateway_data' => $result['data'] ?? []
                 ]);
+
+                // Check if refund is already completed (some gateways process instantly)
+                $refundStatus = $result['data']['status'] ?? 'pending';
+                if (in_array($refundStatus, ['completed', 'successful', 'success'])) {
+                    $refund->markAsSuccessful($result['data'] ?? []);
+                }
 
                 return [
                     'success' => true,
@@ -613,7 +607,9 @@ class FlutterwavePaymentService
                         'refund_id' => $refund->id,
                         'reference' => $refund->reference,
                         'amount' => $refund->amount,
-                        'status' => $refund->status
+                        'status' => $refund->status,
+                        'transaction_id' => $refund->transaction_id,
+                        'gateway_status' => $refundStatus ?? 'unknown'
                     ]
                 ];
             }
@@ -640,19 +636,12 @@ class FlutterwavePaymentService
         try {
             $secretKey = config('services.flutterwave.secret_key');
 
-            Log::info('Getting payment status', [
-                'reference' => $reference,
-                'secret_key_exists' => !empty($secretKey)
-            ]);
-
             $client = new Client([
                 'timeout' => 30,
                 'verify' => false
             ]);
 
             $url = "https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref={$reference}";
-
-            Log::info('Making payment status request', ['url' => $url]);
 
             $response = $client->get($url, [
                 'headers' => [
@@ -661,13 +650,6 @@ class FlutterwavePaymentService
             ]);
 
             $result = json_decode($response->getBody(), true);
-
-            Log::info('Flutterwave payment status response', [
-                'reference' => $reference,
-                'status' => $result['status'] ?? 'unknown',
-                'message' => $result['message'] ?? 'no message',
-                'data' => $result['data'] ?? null
-            ]);
 
             return $result;
         } catch (\Exception $e) {
@@ -691,12 +673,6 @@ class FlutterwavePaymentService
     public function handleWebhook($payload, $signature)
     {
         try {
-            Log::info('Processing Flutterwave webhook', [
-                'event' => $payload['event'] ?? 'unknown',
-                'reference' => $payload['data']['reference'] ?? $payload['data']['tx_ref'] ?? 'unknown',
-                'status' => $payload['data']['status'] ?? 'unknown'
-            ]);
-
             // Verify webhook signature (optional but recommended)
             if (!$this->verifyWebhookSignature($payload, $signature)) {
                 Log::error('Webhook signature verification failed - rejecting webhook');
@@ -708,15 +684,6 @@ class FlutterwavePaymentService
 
             // Flutterwave sends 'tx_ref' not 'reference' in webhook
             $reference = $data['reference'] ?? $data['tx_ref'] ?? '';
-
-            // Log webhook data for debugging
-            Log::info('Webhook payload details', [
-                'event' => $event,
-                'reference' => $reference,
-                'tx_ref' => $data['tx_ref'] ?? 'not_found',
-                'data_keys' => array_keys($data),
-                'full_payload' => $payload
-            ]);
 
             switch ($event) {
                 case 'charge.completed':
@@ -730,11 +697,13 @@ class FlutterwavePaymentService
                     break;
 
                 case 'refund.completed':
-                    // Handle refund completion
-                    break;
+                case 'refund.successful':
+                case 'refund.failed':
+                    // Handle refund completion (multiple possible event names)
+                    return $this->processRefundWebhook($data);
 
                 default:
-                    Log::info('Unhandled webhook event', ['event' => $event]);
+                    // Unhandled webhook event
                     break;
             }
 
@@ -754,12 +723,6 @@ class FlutterwavePaymentService
     private function processSuccessfulPayment($reference, $data)
     {
         try {
-            Log::info('Processing successful payment from webhook', [
-                'reference' => $reference,
-                'transaction_id' => $data['id'] ?? null,
-                'amount' => $data['amount'] ?? null
-            ]);
-
             // Find order by payment reference
             $order = Order::where('payment_reference', $reference)->first();
 
@@ -787,7 +750,6 @@ class FlutterwavePaymentService
                     ]
                 );
 
-                Log::info('Order payment updated via webhook', ['order_id' => $order->id]);
                 return true;
             }
 
@@ -1134,5 +1096,90 @@ class FlutterwavePaymentService
             'reference' => $payload['data']['reference'] ?? 'unknown'
         ]);
         return true;
+    }
+
+    /**
+     * Process refund completion webhook
+     */
+    private function processRefundWebhook($data)
+    {
+        try {
+            Log::info('Processing refund webhook', [
+                'refund_id' => $data['id'] ?? null,
+                'amount' => $data['amount'] ?? null,
+                'status' => $data['status'] ?? null,
+                'full_data' => $data
+            ]);
+
+            // Flutterwave refund webhook might have different structure
+            // Try multiple ways to find the refund record
+            $refund = null;
+
+            // Method 1: Find by Flutterwave refund transaction ID
+            if (isset($data['id'])) {
+                $refund = Refund::where('transaction_id', $data['id'])->first();
+                Log::info('Refund search by transaction_id', [
+                    'transaction_id' => $data['id'],
+                    'found' => !empty($refund)
+                ]);
+            }
+
+            // Method 2: Find by original transaction ID if refund contains it
+            if (!$refund && isset($data['tx_id'])) {
+                $refund = Refund::whereHas('payment', function ($query) use ($data) {
+                    $query->where('transaction_id', $data['tx_id']);
+                })->where('status', 'processing')->first();
+                Log::info('Refund search by original tx_id', [
+                    'tx_id' => $data['tx_id'],
+                    'found' => !empty($refund)
+                ]);
+            }
+
+            // Method 3: Find by amount and recent timestamp (last resort)
+            if (!$refund && isset($data['amount'])) {
+                $refund = Refund::where('amount', $data['amount'])
+                    ->where('status', 'processing')
+                    ->where('created_at', '>=', now()->subHours(1))
+                    ->first();
+                Log::info('Refund search by amount and time', [
+                    'amount' => $data['amount'],
+                    'found' => !empty($refund)
+                ]);
+            }
+
+            if ($refund) {
+                // Update the refund transaction_id if it was null
+                if (empty($refund->transaction_id) && isset($data['id'])) {
+                    $refund->update(['transaction_id' => $data['id']]);
+                    Log::info('Updated refund transaction_id', [
+                        'refund_id' => $refund->id,
+                        'transaction_id' => $data['id']
+                    ]);
+                }
+
+                if (isset($data['status']) && $data['status'] === 'completed') {
+                    $refund->markAsSuccessful($data);
+                    Log::info('Refund marked as successful via webhook', ['refund_id' => $refund->id]);
+                } elseif (isset($data['status']) && in_array($data['status'], ['failed', 'error'])) {
+                    $refund->markAsFailed('Refund failed via webhook: ' . ($data['message'] ?? 'Unknown error'), $data);
+                    Log::info('Refund marked as failed via webhook', ['refund_id' => $refund->id]);
+                } else {
+                    Log::info('Refund webhook with unhandled status', [
+                        'refund_id' => $refund->id,
+                        'status' => $data['status'] ?? 'unknown'
+                    ]);
+                }
+                return true;
+            }
+
+            Log::warning('Refund not found for webhook', ['data' => $data]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Refund webhook processing error: ' . $e->getMessage(), [
+                'data' => $data,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 }

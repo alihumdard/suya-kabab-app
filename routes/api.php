@@ -110,6 +110,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('status/{refund_id}', [RefundController::class, 'getRefundStatus']);
         Route::get('user', [RefundController::class, 'getUserRefunds']);
         Route::get('order/{order_id}', [RefundController::class, 'getOrderRefunds']);
+        Route::get('order-summary/{order_id}', [RefundController::class, 'getOrderRefundSummary']);
         Route::post('cancel/{refund_id}', [RefundController::class, 'cancelRefund']);
     });
 

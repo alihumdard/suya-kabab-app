@@ -19,21 +19,10 @@ if (!function_exists('sendOTP')) {
      */
     function sendOTP($email, $type, $userType = 'user')
     {
-        Log::info('Starting OTP send process', [
-            'email' => $email,
-            'type' => $type,
-            'user_type' => $userType,
-            'timestamp' => Carbon::now()->toDateTimeString()
-        ]);
+
 
         $otp = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
-        Log::info('Generated OTP', [
-            'email' => $email,
-            'otp' => $otp,
-            'type' => $type,
-            'user_type' => $userType
-        ]);
 
         // Save OTP to database
         try {
@@ -67,41 +56,12 @@ if (!function_exists('sendOTP')) {
 
             $userName = $user ? $user->name : null;
 
-            Log::info('User found for notification', [
-                'email' => $email,
-                'user_type' => $userType,
-                'user_id' => $user ? $user->id : null,
-                'user_name' => $userName
-            ]);
 
-            // Log mail configuration
-            Log::info('Mail configuration', [
-                'mailer' => config('mail.default'),
-                'host' => config('mail.mailers.smtp.host'),
-                'port' => config('mail.mailers.smtp.port'),
-                'username' => config('mail.mailers.smtp.username'),
-                'from_address' => config('mail.from.address'),
-                'from_name' => config('mail.from.name')
-            ]);
-
-            // Send notification
-            Log::info('Attempting to send notification', [
-                'email' => $email,
-                'otp' => $otp,
-                'type' => $type,
-                'user_type' => $userType,
-                'user_name' => $userName
-            ]);
 
             Notification::route('mail', $email)
                 ->notify(new UserOtpVerification($email, $userName, $otp, $type));
 
-            Log::info('Notification sent successfully', [
-                'email' => $email,
-                'otp' => $otp,
-                'type' => $type,
-                'user_type' => $userType
-            ]);
+
         } catch (\Exception $e) {
             Log::error('Failed to send OTP notification', [
                 'email' => $email,
