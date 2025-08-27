@@ -249,6 +249,14 @@ class PaymentController extends Controller
                     'payment_data' => $result['data'],
                 ]
             ], 200);
+        } elseif (isset($result['requires_verification']) && $result['requires_verification']) {
+            // Payment requires further verification (OTP or 3D Secure) - return 401 for authentication required
+            return response()->json([
+                'error' => true,
+                'message' => $result['message'],
+                'data' => $result['data'],
+                'requires_verification' => true
+            ], 401);
         }
 
         return response()->json([
@@ -319,13 +327,13 @@ class PaymentController extends Controller
                 ]
             ], 200);
         } elseif (isset($result['requires_verification']) && $result['requires_verification']) {
-            // Payment requires further verification (OTP)
+            // Payment requires further verification (OTP) - return 401 for authentication required
             return response()->json([
                 'error' => true,
                 'message' => $result['message'],
                 'data' => $result['data'],
                 'requires_verification' => true
-            ], 400);
+            ], 401);
         }
 
         return response()->json([
