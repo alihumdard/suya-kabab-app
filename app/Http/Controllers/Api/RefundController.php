@@ -9,6 +9,7 @@ use App\Models\Refund;
 use App\Services\FlutterwavePaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -32,7 +33,7 @@ class RefundController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         $order = Order::where('id', $request->order_id)
             ->where('user_id', $user->id)
             ->first();
@@ -80,14 +81,17 @@ class RefundController extends Controller
             if ($payment->payment_method !== 'cash') {
                 $refund->markAsProcessing();
 
-                $result = $this->paymentService->refundPayment(
-                    $payment->transaction_id,
+                $result = $this->paymentService->processRefund(
+                    $payment->id,
                     $refundAmount,
                     $request->reason
                 );
 
                 if ($result['success']) {
                     $refund->markAsSuccessful($result['data'] ?? []);
+
+                    // Refresh order to get updated status
+                    $order->refresh();
 
                     DB::commit();
 
@@ -100,8 +104,16 @@ class RefundController extends Controller
                             'amount' => $refundAmount,
                             'status' => 'successful',
                             'transaction_id' => $result['data']['id'] ?? null,
+                            'order_status' => [
+                                'current_status' => $order->status,
+                                'payment_status' => $order->payment_status,
+                                'is_fully_refunded' => $order->isFullyRefunded(),
+                                'is_partially_refunded' => $order->isPartiallyRefunded(),
+                                'total_refunded' => $order->getTotalRefundedAmount(),
+                                'refundable_amount' => $order->getRefundableAmount()
+                            ]
                         ]
-                    ]);
+                    ], 200);
                 } else {
                     $refund->markAsFailed($result['message']);
 
@@ -121,6 +133,9 @@ class RefundController extends Controller
                 // For cash payments, mark as successful immediately
                 $refund->markAsSuccessful();
 
+                // Refresh order to get updated status
+                $order->refresh();
+
                 DB::commit();
 
                 return response()->json([
@@ -131,11 +146,18 @@ class RefundController extends Controller
                         'refund_reference' => $refund->reference,
                         'amount' => $refundAmount,
                         'status' => 'successful',
-                        'note' => 'Cash refunds are processed manually by our team'
+                        'note' => 'Cash refunds are processed manually by our team',
+                        'order_status' => [
+                            'current_status' => $order->status,
+                            'payment_status' => $order->payment_status,
+                            'is_fully_refunded' => $order->isFullyRefunded(),
+                            'is_partially_refunded' => $order->isPartiallyRefunded(),
+                            'total_refunded' => $order->getTotalRefundedAmount(),
+                            'refundable_amount' => $order->getRefundableAmount()
+                        ]
                     ]
-                ]);
+                ], 200);
             }
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Refund processing error: ' . $e->getMessage());
@@ -156,7 +178,7 @@ class RefundController extends Controller
             'refund_id' => 'required|exists:refunds,id',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         $refund = Refund::where('id', $request->refund_id)
             ->where('user_id', $user->id)
             ->with(['payment', 'order'])
@@ -195,7 +217,7 @@ class RefundController extends Controller
                     'order_number' => $refund->order->order_number,
                 ]
             ]
-        ]);
+        ], 200);
     }
 
     /**
@@ -203,7 +225,7 @@ class RefundController extends Controller
      */
     public function getUserRefunds(Request $request): JsonResponse
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         $refunds = Refund::where('user_id', $user->id)
             ->with(['payment', 'order'])
@@ -222,7 +244,7 @@ class RefundController extends Controller
                     'total' => $refunds->total(),
                 ]
             ]
-        ]);
+        ], 200);
     }
 
     /**
@@ -234,7 +256,7 @@ class RefundController extends Controller
             'order_id' => 'required|exists:orders,id',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         $order = Order::where('id', $request->order_id)
             ->where('user_id', $user->id)
             ->first();
@@ -271,7 +293,7 @@ class RefundController extends Controller
                     ];
                 })
             ]
-        ]);
+        ], 200);
     }
 
     /**
@@ -283,7 +305,7 @@ class RefundController extends Controller
             'refund_id' => 'required|exists:refunds,id',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         $refund = Refund::where('id', $request->refund_id)
             ->where('user_id', $user->id)
             ->first();
@@ -310,6 +332,47 @@ class RefundController extends Controller
             'data' => [
                 'refund_id' => $refund->id,
                 'status' => 'cancelled'
+            ]
+        ], 200);
+    }
+
+    /**
+     * Get order refund summary
+     */
+    public function getOrderRefundSummary(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+        ]);
+
+        $user = Auth::user();
+        $order = Order::where('id', $request->order_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Order not found or access denied'
+            ], 404);
+        }
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Order refund summary retrieved successfully',
+            'data' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'order_status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'total_amount' => $order->total_amount,
+                'total_refunded' => $order->getTotalRefundedAmount(),
+                'refundable_amount' => $order->getRefundableAmount(),
+                'is_fully_refunded' => $order->isFullyRefunded(),
+                'is_partially_refunded' => $order->isPartiallyRefunded(),
+                'can_be_refunded' => $order->canBeRefunded(),
+                'refunds_count' => $order->refunds()->count(),
+                'successful_refunds_count' => $order->refunds()->where('status', 'successful')->count()
             ]
         ]);
     }

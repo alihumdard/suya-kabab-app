@@ -77,6 +77,12 @@ class Refund extends Model
         if ($payment->getRefundableAmount() <= 0) {
             $payment->markAsRefunded();
         }
+
+        // Update order status based on refund
+        $order = $this->order;
+        if ($order) {
+            $order->updateRefundStatus();
+        }
     }
 
     /**
@@ -150,6 +156,3 @@ class Refund extends Model
         return $this->status === 'failed';
     }
 }
-
-
-

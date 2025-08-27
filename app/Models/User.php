@@ -119,4 +119,12 @@ class User extends Authenticatable
     {
         throw new \Exception('Rewards balance functionality is removed');
     }
+
+    /**
+     * Get the card payloads for the user.
+     */
+    public function cardPayloads()
+    {
+        return $this->hasMany(CardPayload::class);
+    }
 }

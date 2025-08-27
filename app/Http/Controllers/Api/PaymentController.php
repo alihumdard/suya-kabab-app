@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Models\CardPayload;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -161,15 +162,11 @@ class PaymentController extends Controller
      */
     public function completeCardPayment(Request $request): JsonResponse
     {
-        // Base validation rules
+        // Simplified validation rules - we'll get card details from database
         $rules = [
-            'card_number' => 'required|string',
-            'cvv' => 'required|string',
-            'expiry_month' => 'required|string',
-            'expiry_year' => 'required|string',
-            'currency' => 'required|string',
+            'currency' => 'nullable|string', // Made optional since we can get it from card payload
             'amount' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'nullable|email', // Made optional since we can get it from card payload
             'fullname' => 'nullable|string',
             'phone_number' => 'nullable|string',
             'tx_ref' => 'required|string',
@@ -193,21 +190,44 @@ class PaymentController extends Controller
 
         $request->validate($rules);
 
-        // Structure the data according to Flutterwave API format
+        // Get the authenticated user
+        $user = $request->user();
+        
+        // Get the latest card payload for this user
+        $cardPayload = CardPayload::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        if (!$cardPayload) {
+            return response()->json([
+                'error' => true,
+                'message' => 'No card payload found for this user. Please place an order with card details first.',
+                'data' => null
+            ], 400);
+        }
+
+        // Structure the data according to Flutterwave API format using stored card payload
         $cardData = [
-            'card_number' => $request->card_number,
-            'cvv' => $request->cvv,
-            'expiry_month' => $request->expiry_month,
-            'expiry_year' => $request->expiry_year,
-            'currency' => $request->currency,
+            'card_number' => $cardPayload->card_number,
+            'cvv' => $cardPayload->cvv,
+            'expiry_month' => $cardPayload->expiry_month,
+            'expiry_year' => $cardPayload->expiry_year,
+            'currency' => $cardPayload->currency,
             'amount' => $request->amount,
-            'email' => $request->email,
-            'fullname' => $request->fullname,
+            'email' => $request->email ?? $cardPayload->email,
+            'fullname' => $request->fullname ?? $cardPayload->card_holder_name,
             'phone_number' => $request->phone_number,
             'tx_ref' => $request->tx_ref,
             'redirect_url' => $request->redirect_url ?? 'https://example.com',
             'authorization' => $request->authorization
         ];
+
+        Log::info('Using stored card payload for payment completion', [
+            'user_id' => $user->id,
+            'card_payload_id' => $cardPayload->id,
+            'tx_ref' => $request->tx_ref,
+            'card_last_four' => substr($cardPayload->card_number, -4)
+        ]);
 
         $result = $this->paymentService->chargeCard($cardData);
 

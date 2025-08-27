@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateOrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\AddonCategory;
+use App\Models\CardPayload;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PendingOrder;
@@ -468,11 +469,52 @@ class OrderController extends Controller
     }
 
     /**
+     * Store card payload data
+     */
+    protected function storeCardPayload(Request $request, $user)
+    {
+        try {
+            $cardDetails = $request->card_details;
+
+            $cardPayload = CardPayload::create([
+                'card_number' => $cardDetails['card_number'],
+                'expiry_month' => $cardDetails['expiry_month'],
+                'expiry_year' => $cardDetails['expiry_year'],
+                'cvv' => $cardDetails['cvv'], // Note: In production, this should be encrypted or not stored
+                'card_holder_name' => $cardDetails['card_holder_name'],
+                'email' => $user->email,
+                'currency' => 'NGN',
+                'user_id' => $user->id,
+            ]);
+
+            Log::info('Card payload stored successfully', [
+                'card_payload_id' => $cardPayload->id,
+                'user_id' => $user->id,
+                'card_last_four' => substr($cardDetails['card_number'], -4)
+            ]);
+
+            return $cardPayload;
+        } catch (\Exception $e) {
+            Log::error('Failed to store card payload: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Don't throw exception here as we don't want to fail the order
+            // just because card payload storage failed
+            return null;
+        }
+    }
+
+    /**
      * Process card payment using Flutterwave
      */
     protected function processCardPayment(Request $request, $amount, $user, $orderData = null)
     {
         try {
+            // First, store the card payload data
+            $cardPayload = $this->storeCardPayload($request, $user);
+
             $cardDetails = $request->card_details;
 
             $cardData = [

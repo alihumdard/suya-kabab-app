@@ -180,4 +180,80 @@ class Order extends Model
         // Use dynamic delivery charges from settings
         return Setting::calculateDeliveryCharges($this->subtotal, $this->delivery_method);
     }
+
+    /**
+     * Check if order can be refunded.
+     */
+    public function canBeRefunded(): bool
+    {
+        return $this->isPaid() &&
+            !in_array($this->status, ['cancelled']) &&
+            $this->payment_status !== 'refunded';
+    }
+
+    /**
+     * Get total refunded amount for this order.
+     */
+    public function getTotalRefundedAmount(): float
+    {
+        return $this->refunds()->where('status', 'successful')->sum('amount');
+    }
+
+    /**
+     * Get remaining refundable amount.
+     */
+    public function getRefundableAmount(): float
+    {
+        $totalRefunded = $this->getTotalRefundedAmount();
+        return max(0, $this->total_amount - $totalRefunded);
+    }
+
+    /**
+     * Check if order is fully refunded.
+     */
+    public function isFullyRefunded(): bool
+    {
+        return $this->getTotalRefundedAmount() >= $this->total_amount;
+    }
+
+    /**
+     * Check if order is partially refunded.
+     */
+    public function isPartiallyRefunded(): bool
+    {
+        $refundedAmount = $this->getTotalRefundedAmount();
+        return $refundedAmount > 0 && $refundedAmount < $this->total_amount;
+    }
+
+    /**
+     * Update order status based on refund status.
+     */
+    public function updateRefundStatus(): void
+    {
+        if ($this->isFullyRefunded()) {
+            // Full refund - mark payment as refunded and potentially cancel order
+            $this->update([
+                'payment_status' => 'refunded',
+                'status' => $this->status === 'delivered' ? 'delivered' : 'cancelled'
+            ]);
+        } elseif ($this->isPartiallyRefunded()) {
+            // Partial refund - keep order status but note partial refund
+            // Don't change order status for partial refunds
+            $this->update([
+                'notes' => ($this->notes ? $this->notes . ' | ' : '') .
+                    'Partial refund of ' . number_format($this->getTotalRefundedAmount(), 2) . ' processed on ' . now()->format('Y-m-d H:i')
+            ]);
+        }
+    }
+
+    /**
+     * Mark order as cancelled with refund.
+     */
+    public function markAsCancelledWithRefund(): void
+    {
+        $this->update([
+            'status' => 'cancelled',
+            'payment_status' => 'refunded'
+        ]);
+    }
 }
