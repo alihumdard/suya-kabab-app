@@ -72,7 +72,7 @@ class Payment extends Model
     public function canBeRefunded(): bool
     {
         return $this->status === 'successful' &&
-            $this->payment_method !== 'cash' &&
+            $this->payment_method !== 'cod' &&
             $this->refunds()->where('status', 'successful')->sum('amount') < $this->amount;
     }
 
@@ -165,7 +165,7 @@ class Payment extends Model
     {
         return match ($this->payment_method) {
             'card' => 'Credit/Debit Card',
-            'cash' => 'Cash on Delivery',
+            'cod' => 'Cash on Delivery',
             'flutterwave' => 'Flutterwave',
             'bank_transfer' => 'Bank Transfer',
             'mobile_money' => 'Mobile Money',

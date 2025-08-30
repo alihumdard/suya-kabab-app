@@ -101,7 +101,6 @@ class OrderController extends Controller
                             $user->id,
                             2 // expires in 2 hours
                         );
-
                     }
 
                     return response()->json([
@@ -118,7 +117,7 @@ class OrderController extends Controller
                     ], 400);
                 }
             } else {
-                // For non-card payments (COD, cash), create order directly
+                // For non-card payments (COD), create order directly
                 return $this->createOrderForNonCardPayment($orderData, $paymentMethod, $user, $request);
             }
         } catch (\Exception $e) {
@@ -325,7 +324,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Create order for non-card payments (COD, cash)
+    * Create order for non-card payments (COD)
      */
     protected function createOrderForNonCardPayment($orderData, $paymentMethod, $user, $request)
     {
@@ -346,7 +345,7 @@ class OrderController extends Controller
                 'delivery_instructions' => $request->delivery_instructions,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'payment_method' => $paymentMethod === 'cod' ? 'cash' : $paymentMethod, // Map 'cod' to 'cash' for database enum
+                'payment_method' => $paymentMethod, // Use 'cod' directly
             ]);
 
             // Create payment record
@@ -356,14 +355,14 @@ class OrderController extends Controller
                 'reference' => $order->order_number,
                 'amount' => $orderData['total_amount'],
                 'currency' => 'NGN',
-                'payment_method' => $paymentMethod === 'cod' ? 'cash' : $paymentMethod, // Map 'cod' to 'cash' for database enum
+                'payment_method' => $paymentMethod, // Use 'cod' directly
                 'status' => 'pending',
-                'gateway_response' => $paymentMethod === 'cod' ? 'Cash on delivery' : 'Cash payment',
+                'gateway_response' => $paymentMethod === 'cod' ? 'Cash on delivery' : 'COD payment',
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'meta_data' => [
                     'order_number' => $order->order_number,
-                    'payment_type' => $paymentMethod === 'cod' ? 'cash_on_delivery' : 'cash_payment',
+                    'payment_type' => $paymentMethod === 'cod' ? 'cod' : 'other',
                     'original_payment_method' => $paymentMethod // Keep track of original method
                 ]
             ]);
@@ -481,21 +480,12 @@ class OrderController extends Controller
                 'user_id' => $user->id,
             ]);
 
-            Log::info('Card payload stored successfully', [
-                'card_payload_id' => $cardPayload->id,
-                'user_id' => $user->id,
-                'card_last_four' => substr($cardDetails['card_number'], -4)
-            ]);
-
             return $cardPayload;
         } catch (\Exception $e) {
             Log::error('Failed to store card payload: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            
-            // Don't throw exception here as we don't want to fail the order
-            // just because card payload storage failed
             return null;
         }
     }

@@ -72,12 +72,12 @@ class CreateOrderRequest extends FormRequest
             'delivery_instructions' => 'nullable|string',
             'discount_code' => 'nullable|string',
             'total_amount' => 'required|numeric',
-            'payment_method' => 'nullable|string|in:card,cash,cod,flutterwave',
+            'payment_method' => 'nullable|string|in:card,cod,flutterwave',
         ];
 
         // Add card payment validation rules if payment method is card
         if ($this->input('payment_method') === 'card') {
-            $rules['payment_method'] = 'required|string|in:card,cash,cod,flutterwave';
+            $rules['payment_method'] = 'required|string|in:card,cod,flutterwave';
             $rules['card_details'] = 'required|array';
             $rules['card_details.card_number'] = 'required|string|min:13|max:19';
             $rules['card_details.cvv'] = 'required|string|min:3|max:4';
@@ -90,7 +90,7 @@ class CreateOrderRequest extends FormRequest
             $rules['card_details.card_holder_name'] = 'required|string|max:255';
         } else {
             // For other payment methods, payment_method is optional and defaults to COD
-            $rules['payment_method'] = 'nullable|string|in:card,cash,cod,flutterwave';
+            $rules['payment_method'] = 'nullable|string|in:card,cod,flutterwave';
         }
 
         return $rules;

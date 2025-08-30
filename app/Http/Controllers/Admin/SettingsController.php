@@ -209,9 +209,9 @@ class SettingsController extends Controller
                     'enabled' => Setting::get('flutterwave_enabled', false),
                 ],
                 [
-                    'id' => 'cash',
+                    'id' => 'cod',
                     'name' => 'Cash on Delivery',
-                    'description' => 'Pay with cash when your order is delivered',
+                    'description' => 'Pay with cash on delivery',
                     'enabled' => true,
                 ],
             ],
