@@ -133,7 +133,6 @@ Route::prefix('admin')->group(function () {
             Route::get('/delivery', [SettingsController::class, 'getDeliverySettings'])->name('admin.settings.delivery');
             Route::put('/delivery', [SettingsController::class, 'updateDeliverySettings'])->name('admin.settings.delivery.update');
         });
-
     });
 });
 
@@ -141,5 +140,3 @@ Route::prefix('admin')->group(function () {
 Route::get('/dashboard', function () {
     return view('pages.admin.dashboard');
 })->name('dashboard')->middleware('admin');
-
-

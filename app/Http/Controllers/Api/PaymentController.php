@@ -192,7 +192,7 @@ class PaymentController extends Controller
 
         // Get the authenticated user
         $user = $request->user();
-        
+
         // Get the latest card payload for this user
         $cardPayload = CardPayload::where('user_id', $user->id)
             ->latest()

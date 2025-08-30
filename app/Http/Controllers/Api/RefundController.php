@@ -77,8 +77,8 @@ class RefundController extends Controller
             // Create refund record
             $refund = $payment->createRefund($refundAmount, $request->reason);
 
-            // Process refund through payment gateway if not cash
-            if ($payment->payment_method !== 'cash') {
+            // Process refund through payment gateway if not cod
+            if ($payment->payment_method !== 'cod') {
                 $refund->markAsProcessing();
 
                 $result = $this->paymentService->processRefund(
@@ -130,7 +130,7 @@ class RefundController extends Controller
                     ], 400);
                 }
             } else {
-                // For cash payments, mark as successful immediately
+                // For cod payments, mark as successful immediately
                 $refund->markAsSuccessful();
 
                 // Refresh order to get updated status
@@ -140,13 +140,13 @@ class RefundController extends Controller
 
                 return response()->json([
                     'error' => false,
-                    'message' => 'Cash refund request submitted successfully',
+                    'message' => 'COD refund request submitted successfully',
                     'data' => [
                         'refund_id' => $refund->id,
                         'refund_reference' => $refund->reference,
                         'amount' => $refundAmount,
                         'status' => 'successful',
-                        'note' => 'Cash refunds are processed manually by our team',
+                        'note' => 'COD refunds are processed manually by our team',
                         'order_status' => [
                             'current_status' => $order->status,
                             'payment_status' => $order->payment_status,
